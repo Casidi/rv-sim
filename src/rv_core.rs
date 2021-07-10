@@ -1,6 +1,6 @@
 #[derive(Default)]
 pub struct RVCore {
-    pub pc: u32,
+    pc: u32,
     regs: [u32; 32],
 }
 
@@ -17,4 +17,18 @@ impl RVCore {
             step_count += 1;
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_core_run() {
+		let mut core: RVCore = Default::default();
+		assert_eq!(0, core.pc);
+
+		core.run(5);
+		assert_eq!(20, core.pc);
+	}
 }
