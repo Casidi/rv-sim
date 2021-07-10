@@ -17,6 +17,16 @@ impl RVCore {
             step_count += 1;
         }
     }
+
+	fn inst_auipc(&mut self, rd: usize, imm: u32) {
+		self.regs[rd] = self.pc + imm;
+		self.pc += 4;
+	}
+
+	fn inst_addi(&mut self, rd: usize, rs: usize, imm: u32) {
+		self.regs[rd] = self.regs[rs] + imm;
+		self.pc += 4;
+	}
 }
 
 #[cfg(test)]
@@ -30,5 +40,21 @@ mod tests {
 
 		core.run(5);
 		assert_eq!(20, core.pc);
+	}
+
+	#[test]
+	fn test_inst_auipc() {
+		let mut core: RVCore = Default::default();
+		core.pc = 0x1234;
+		core.inst_auipc(1, 0xffff1000);
+		assert_eq!(core.regs[1], 0xffff1000 + 0x1234);
+	}
+
+	#[test]
+	fn test_inst_addi() {
+		let mut core: RVCore = Default::default();
+		core.regs[2] = 0x1234;
+		core.inst_addi(1, 2, 0xffff1000);
+		assert_eq!(core.regs[1], 0xffff1000 + 0x1234);
 	}
 }
