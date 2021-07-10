@@ -1,25 +1,15 @@
-#[derive(Default)]
-struct RVCore {
-    pc: u32,
-    regs: [u32; 32],
-}
-
-impl RVCore {
-    fn step(&mut self, inst: u32) {
-        println!("PC = {}, inst = {}", self.pc, inst);
-        self.pc += 4;
-    }
-    
-    fn run(&mut self, num_steps: i32) {
-        let mut step_count = 0;
-        while step_count < num_steps {
-            self.step(0);
-            step_count += 1;
-        }
-    }
-}
+mod rv_core;
 
 fn main() {
-    let mut core: RVCore = Default::default();
+    let mut core: rv_core::RVCore = Default::default();
     core.run(5);
+}
+
+#[test]
+fn test_core_run() {
+    let mut core: rv_core::RVCore = Default::default();
+	assert_eq!(0, core.pc);
+
+    core.run(5);
+	assert_eq!(20, core.pc);
 }
