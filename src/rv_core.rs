@@ -6,26 +6,58 @@ pub struct RVCore {
 
 impl RVCore {
     fn step(&mut self, inst: u32) {
-        println!("PC = {}, inst = {}", self.pc, inst);
-        self.pc += 4;
+		self.decode_inst(inst);
     }
     
     pub fn run(&mut self, num_steps: i32) {
         let mut step_count = 0;
         while step_count < num_steps {
-            self.step(0);
+            self.step(0x00002197); //AUIPC
             step_count += 1;
         }
     }
 
+	fn decode_inst(&mut self, inst: u32) {
+		match inst & 0b11 {
+			0 | 1 | 2 => {
+				self.pc += 2;
+			}
+			_ => {
+				self.execute_inst_4byte(inst);
+				self.pc += 4;
+			}
+		}
+	}
+
+	fn execute_inst_4byte(&mut self, inst: u32) {
+		let opcode = inst & 0x7f;
+		let funct3 = (inst & 0x00007000) >> 12;
+		let rd = ((inst & 0x00000f80) >> 7) as usize;
+		let rs1 = ((inst & 0x000f8000) >> 15) as usize;
+		match opcode {
+			0x13 => {
+				let imm = inst >> 20;
+				match funct3 {
+					0x0 => {
+						self.inst_addi(rd, rs1, imm);
+					}
+					_ => panic!("Invalid instruction"),
+				}
+			}
+			0x17 => {
+				let imm = inst & 0xfffff000;
+				self.inst_auipc(rd, imm);
+			}
+			_ => panic!("Invalid instruction"),
+		}
+	}
+
 	fn inst_auipc(&mut self, rd: usize, imm: u32) {
 		self.regs[rd] = self.pc + imm;
-		self.pc += 4;
 	}
 
 	fn inst_addi(&mut self, rd: usize, rs: usize, imm: u32) {
 		self.regs[rd] = self.regs[rs] + imm;
-		self.pc += 4;
 	}
 }
 
