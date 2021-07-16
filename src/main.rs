@@ -1,5 +1,5 @@
-mod rv_core;
 mod memory_model;
+mod rv_core;
 
 fn main() {
     let mut core: rv_core::RVCore = Default::default();
