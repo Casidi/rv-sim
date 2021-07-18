@@ -1,5 +1,5 @@
 use crate::rv_core::inst_type::InstType;
-use crate::rv_core::RVCore;
+use crate::rv_core::inst_info::InstID;
 
 #[derive(Default)]
 pub struct InstDecoder {
@@ -10,7 +10,7 @@ impl InstDecoder {
         let mut new_inst = InstType {
             data: inst_bytes,
             len: 0,
-            operate: RVCore::inst_nop,
+            id: InstID::NOP,
         };
         match inst_bytes & 0b11 {
             0 | 1 | 2 => {
@@ -31,14 +31,31 @@ impl InstDecoder {
         match opcode {
             0x13 => match funct3 {
                 0x0 => {
-                    inst.operate = RVCore::inst_addi;
+					inst.id = InstID::ADDI;
                 }
                 _ => panic!("Invalid instruction"),
             },
             0x17 => {
-                inst.operate = RVCore::inst_auipc;
+				inst.id = InstID::AUIPC;
             }
             _ => panic!("Invalid instruction"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+	use crate::rv_core::inst_type::*;
+
+    #[test]
+    fn test_auipc() {
+        let decoder: InstDecoder = Default::default();
+		let inst_golden = inst_auipc_code(0, 0);
+		let inst = decoder.decode(inst_golden.data);
+
+		assert_eq!(4, inst.len);
+		assert_eq!(InstID::AUIPC, inst.id);
+		assert_eq!(inst_golden.data, inst.data);
     }
 }

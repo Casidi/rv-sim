@@ -1,5 +1,6 @@
 mod inst_type;
 mod inst_decoder;
+mod inst_info;
 
 #[derive(Default)]
 pub struct RVCore {
@@ -11,7 +12,7 @@ pub struct RVCore {
 impl RVCore {
     fn step(&mut self, inst_bytes: u32) {
 		let inst = self.id_instance.decode(inst_bytes);
-        (inst.operate)(self, &inst);
+		(inst_info::inst_info_table[inst.id as usize].operate)(self, &inst);
         self.pc += inst.len;
     }
 

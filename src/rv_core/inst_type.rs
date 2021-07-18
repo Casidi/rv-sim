@@ -1,9 +1,9 @@
-use crate::rv_core::RVCore;
+use crate::rv_core::inst_info::InstID;
 
 pub struct InstType {
     pub data: u32,
     pub len: u32,
-    pub operate: fn(&mut RVCore, &InstType),
+	pub id: InstID,
 }
 
 impl InstType {
@@ -28,7 +28,7 @@ pub fn inst_auipc_code(rd: u32, imm: u32) -> InstType {
 	InstType {
 		data: (rd << 7) | (imm & 0xfffff000) | 0x17,
 		len: 4,
-		operate: RVCore::inst_auipc,
+		id: InstID::AUIPC,
 	}
 }
 
@@ -36,6 +36,6 @@ pub fn inst_addi_code(rd: u32, rs1: u32, imm: u32) -> InstType {
 	InstType {
 		data: (imm << 20) | (rs1 << 15) | (rd << 7) | 0x13,
 		len: 4,
-		operate: RVCore::inst_addi,
+		id: InstID::ADDI,
 	}
 }
