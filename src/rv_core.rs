@@ -15,7 +15,7 @@ pub struct RVCore<'a> {
 impl<'a> RVCore<'a> {
     fn step(&mut self, inst_bytes: u32) {
         let inst = self.id_instance.decode(inst_bytes);
-        print!("{}", inst_info::inst_info_table[inst.id as usize].name);
+        print!("PC = {:#08x}, {}\n", self.pc, inst_info::inst_info_table[inst.id as usize].name);
         self.execute(&inst);
         self.pc += inst.len;
     }
@@ -57,7 +57,7 @@ impl<'a> RVCore<'a> {
         self.mem_if.as_mut().unwrap().access_memory(&mut payload);
     }
 
-    fn bind_mem(&mut self, mem_if: &'a mut dyn MemoryInterface) {
+    pub fn bind_mem(&mut self, mem_if: &'a mut dyn MemoryInterface) {
         self.mem_if = Some(mem_if);
     }
 
