@@ -12,6 +12,7 @@ pub struct RVCore {
 impl RVCore {
     fn step(&mut self, inst_bytes: u32) {
 		let inst = self.id_instance.decode(inst_bytes);
+		print!("{}", inst_info::inst_info_table[inst.id as usize].name);
 		(inst_info::inst_info_table[inst.id as usize].operate)(self, &inst);
         self.pc += inst.len;
     }
