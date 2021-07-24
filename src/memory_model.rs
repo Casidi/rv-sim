@@ -1,7 +1,20 @@
 use std::collections::HashMap;
+use crate::memory_interface::{Payload, MemoryInterface, MemoryOperation};
 
 struct MemoryModel {
     data: HashMap<u32, [u8; 32]>,
+}
+
+impl MemoryInterface for MemoryModel {
+    fn access_memory(&mut self, payload: &mut Payload) {
+        match payload.op {
+            MemoryOperation::READ => {
+                payload.data[0] = self.read_byte(0x0);
+            }
+            MemoryOperation::WRITE => self.write_byte(0x0, 0),
+            MemoryOperation::INVALID => panic!("Invalid mem op"),
+        }
+    }
 }
 
 impl MemoryModel {

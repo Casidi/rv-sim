@@ -1,32 +1,8 @@
-mod inst_decoder;
-mod inst_info;
 mod inst_type;
+mod inst_info;
+mod inst_decoder;
 use crate::rv_core::inst_info::InstID;
-
-#[derive(PartialEq, Debug, Copy, Clone)]
-#[allow(non_camel_case_types)]
-pub enum MemoryOperation {
-    READ,
-    WRITE,
-    INVALID,
-}
-
-impl Default for MemoryOperation {
-    fn default() -> MemoryOperation {
-        MemoryOperation::INVALID
-    }
-}
-
-#[derive(Default)]
-struct Payload {
-    addr: u32,
-    data: Vec<u8>,
-    op: MemoryOperation,
-}
-
-trait MemoryInterface {
-    fn access_memory(&mut self, payload: &Payload);
-}
+use crate::memory_interface::{Payload, MemoryInterface, MemoryOperation};
 
 #[derive(Default)]
 pub struct RVCore<'a> {
@@ -64,21 +40,21 @@ impl<'a> RVCore<'a> {
     }
 
     fn write_memory(&mut self, address: u32, data: &[u8]) {
-        let payload = Payload {
+        let mut payload = Payload {
             addr: address,
             data: data.to_vec(),
             op: MemoryOperation::WRITE,
         };
-        self.mem_if.as_mut().unwrap().access_memory(&payload);
+        self.mem_if.as_mut().unwrap().access_memory(&mut payload);
     }
 
     fn read_memory(&mut self, address: u32, data: &[u8]) {
-        let payload = Payload {
+        let mut payload = Payload {
             addr: address,
             data: data.to_vec(),
             op: MemoryOperation::READ,
         };
-        self.mem_if.as_mut().unwrap().access_memory(&payload);
+        self.mem_if.as_mut().unwrap().access_memory(&mut payload);
     }
 
     fn bind_mem(&mut self, mem_if: &'a mut dyn MemoryInterface) {
@@ -127,7 +103,7 @@ mod tests {
     }
 
     impl MemoryInterface for MemoryStub {
-        fn access_memory(&mut self, payload: &Payload) {
+        fn access_memory(&mut self, payload: &mut Payload) {
             self.buffer.addr = payload.addr;
             self.buffer.data = payload.data.clone();
             self.buffer.op = payload.op;
