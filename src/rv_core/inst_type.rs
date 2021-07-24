@@ -15,6 +15,10 @@ impl InstType {
         ((self.data & 0x000f8000) >> 15) as usize
     }
 
+    pub fn get_rs2(&self) -> usize {
+        ((self.data >> 2) & 0x1f) as usize
+    }
+
     pub fn get_imm_itype(&self) -> u32 {
         self.data >> 20
     }
@@ -25,6 +29,10 @@ impl InstType {
 
     pub fn get_imm_ci(&self) -> u32 {
         ((self.data >> 2) & 0x1f) | (((self.data >> 12) & 1) << 5)
+    }
+
+    pub fn get_imm_css(&self) -> u32 {
+        (self.data >> 7) & 0x3f
     }
 }
 
@@ -49,5 +57,13 @@ pub fn inst_c_addi_code(rd: u32, imm: u32) -> InstType {
         data: (((imm >> 5) & 1) << 12) | (rd << 7) | ((imm & 0x1f) << 2) | 0x1,
         len: 2,
         id: InstID::C_ADDI,
+    }
+}
+
+pub fn inst_c_swsp_code(rs2: u32, imm: u32) -> InstType {
+    InstType {
+        data: (((imm >> 2) & 0xf) << 9) | (((imm >> 6) & 0x3) << 7) | ((rs2 & 0x1f) << 2) | 0x2,
+        len: 2,
+        id: InstID::C_SWSP,
     }
 }
