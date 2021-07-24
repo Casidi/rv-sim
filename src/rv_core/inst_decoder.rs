@@ -35,6 +35,7 @@ impl InstDecoder {
             },
             0x2 => match funct3 {
                 0x6 => inst.id = InstID::C_SWSP,
+                0x2 => inst.id = InstID::C_LWSP,
                 _ => panic!("Invalid instruction"),
             },
             _ => panic!("Invalid instruction"),

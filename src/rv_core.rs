@@ -3,10 +3,25 @@ mod inst_info;
 mod inst_type;
 use crate::rv_core::inst_info::InstID;
 
+#[derive(PartialEq, Debug, Copy, Clone)]
+#[allow(non_camel_case_types)]
+pub enum MemoryOperation {
+    READ,
+    WRITE,
+    INVALID,
+}
+
+impl Default for MemoryOperation {
+    fn default() -> MemoryOperation {
+        MemoryOperation::INVALID
+    }
+}
+
 #[derive(Default)]
 struct Payload {
     addr: u32,
     data: Vec<u8>,
+    op: MemoryOperation,
 }
 
 trait MemoryInterface {
@@ -35,6 +50,7 @@ impl<'a> RVCore<'a> {
             InstID::ADDI => self.inst_addi(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
+            InstID::C_LWSP => self.inst_c_lwsp(inst),
             InstID::NOP => self.inst_nop(inst),
         }
     }
@@ -51,6 +67,16 @@ impl<'a> RVCore<'a> {
         let payload = Payload {
             addr: address,
             data: data.to_vec(),
+            op: MemoryOperation::WRITE,
+        };
+        self.mem_if.as_mut().unwrap().access_memory(&payload);
+    }
+
+    fn read_memory(&mut self, address: u32, data: &[u8]) {
+        let payload = Payload {
+            addr: address,
+            data: data.to_vec(),
+            op: MemoryOperation::READ,
         };
         self.mem_if.as_mut().unwrap().access_memory(&payload);
     }
@@ -79,8 +105,15 @@ impl<'a> RVCore<'a> {
         let imm = inst.get_imm_css();
         let address = self.regs[2] + (((imm & 0x3) << 6) | (imm & 0x3c));
         let data = self.regs[inst.get_rs2()];
-        self.regs[inst.get_rd()] = self.regs[inst.get_rd()] + inst.get_imm_ci();
         self.write_memory(address, &data.to_le_bytes());
+    }
+
+    fn inst_c_lwsp(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_ci();
+        let address = self.regs[2] + (((imm & 0x3) << 6) | (imm & 0x3c));
+        let data = [0; 4];
+        self.read_memory(address, &data);
+        self.regs[inst.get_rd()] = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
     }
 }
 
@@ -97,6 +130,7 @@ mod tests {
         fn access_memory(&mut self, payload: &Payload) {
             self.buffer.addr = payload.addr;
             self.buffer.data = payload.data.clone();
+            self.buffer.op = payload.op;
         }
     }
 
@@ -142,7 +176,20 @@ mod tests {
         core.regs[1] = 0x12345678; // Data
         core.regs[2] = 0x8888; // Address
         core.inst_c_swsp(&inst_type::inst_c_swsp_code(1, 0x4));
+        assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
         assert_eq!(0x888c, mem_stub.buffer.addr);
         assert_eq!([0x78, 0x56, 0x34, 0x12].to_vec(), mem_stub.buffer.data);
+    }
+
+    #[test]
+    fn test_inst_c_lwsp() {
+        let mut core: RVCore = Default::default();
+        let mut mem_stub: MemoryStub = Default::default();
+        core.bind_mem(&mut mem_stub);
+
+        core.regs[2] = 0x8888; // Address
+        core.inst_c_lwsp(&inst_type::inst_c_lwsp_code(1, 0x4));
+        assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
+        assert_eq!(0x888c, mem_stub.buffer.addr);
     }
 }

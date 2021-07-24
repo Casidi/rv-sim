@@ -62,8 +62,21 @@ pub fn inst_c_addi_code(rd: u32, imm: u32) -> InstType {
 
 pub fn inst_c_swsp_code(rs2: u32, imm: u32) -> InstType {
     InstType {
-        data: (((imm >> 2) & 0xf) << 9) | (((imm >> 6) & 0x3) << 7) | ((rs2 & 0x1f) << 2) | 0x2,
+        data: (((imm >> 2) & 0xf) << 9) | (((imm >> 6) & 0x3) << 7) | ((rs2 & 0x1f) << 2)
+                | 0x2 | (0x6 << 13),
         len: 2,
         id: InstID::C_SWSP,
+    }
+}
+
+pub fn inst_c_lwsp_code(rd: u32, offset: u32) -> InstType {
+    InstType {
+        data: (((offset >> 2) & 0x7) << 4)
+                | (((offset >> 6) & 0x3) << 2)
+                | (((offset >> 5) & 0x1) << 12)
+                | ((rd & 0x1f) << 7)
+                | 0x2 | (0x2 << 13),
+        len: 2,
+        id: InstID::C_LWSP,
     }
 }

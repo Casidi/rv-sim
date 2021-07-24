@@ -5,8 +5,8 @@ A RISC-V instruction-accurate simulator
 Name       | Executed Count | Implemented
 ---------- | -------------  | -----------
 c.addi     | 22             | :heavy_check_mark:
-c.swsp     | 22             | 
-c.lwsp     | 21             | 
+c.swsp     | 22             | :heavy_check_mark:
+c.lwsp     | 21             | :heavy_check_mark:
 addi       | 14             | :heavy_check_mark:
 c.li       | 14             | 
 sb         | 13             | 
