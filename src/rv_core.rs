@@ -1,19 +1,19 @@
-mod inst_type;
 mod inst_decoder;
 mod inst_info;
+mod inst_type;
 
 #[derive(Default)]
 pub struct RVCore {
     pc: u32,
     regs: [u32; 32],
-	id_instance: inst_decoder::InstDecoder,
+    id_instance: inst_decoder::InstDecoder,
 }
 
 impl RVCore {
     fn step(&mut self, inst_bytes: u32) {
-		let inst = self.id_instance.decode(inst_bytes);
-		print!("{}", inst_info::inst_info_table[inst.id as usize].name);
-		(inst_info::inst_info_table[inst.id as usize].operate)(self, &inst);
+        let inst = self.id_instance.decode(inst_bytes);
+        print!("{}", inst_info::inst_info_table[inst.id as usize].name);
+        (inst_info::inst_info_table[inst.id as usize].operate)(self, &inst);
         self.pc += inst.len;
     }
 
@@ -33,6 +33,12 @@ impl RVCore {
 
     fn inst_addi(&mut self, inst: &inst_type::InstType) {
         self.regs[inst.get_rd()] = self.regs[inst.get_rs1()] + inst.get_imm_itype();
+    }
+
+    fn inst_c_addi(&mut self, inst: &inst_type::InstType) {
+        if inst.get_rd() != 0 {
+            self.regs[inst.get_rd()] = self.regs[inst.get_rd()] + inst.get_imm_ci();
+        }
     }
 }
 
@@ -63,5 +69,13 @@ mod tests {
         core.regs[2] = 0x1234;
         core.inst_addi(&inst_type::inst_addi_code(1, 2, 0x7ff));
         assert_eq!(core.regs[1], 0x7ff + 0x1234);
+    }
+
+    #[test]
+    fn test_inst_c_addi() {
+        let mut core: RVCore = Default::default();
+        core.regs[2] = 0x1234;
+        core.inst_c_addi(&inst_type::inst_c_addi_code(2, 0x1));
+        assert_eq!(core.regs[2], 0x1235);
     }
 }
