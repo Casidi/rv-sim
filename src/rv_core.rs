@@ -27,6 +27,7 @@ impl<'a> RVCore<'a> {
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
+            InstID::C_LI => self.inst_c_li(inst),
             InstID::NOP => self.inst_nop(inst),
         }
     }
@@ -89,7 +90,15 @@ impl<'a> RVCore<'a> {
         let address = self.regs[2] + (((imm & 0x3) << 6) | (imm & 0x3c));
         let data = [0; 4];
         self.read_memory(address, &data);
-        self.regs[inst.get_rd()] = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
+        if inst.get_rd() != 0 {
+            self.regs[inst.get_rd()] = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
+        }
+    }
+
+    fn inst_c_li(&mut self, inst: &inst_type::InstType) {
+        if inst.get_rd() != 0 {
+            self.regs[inst.get_rd()] = inst.get_imm_ci();
+        }
     }
 }
 
@@ -167,5 +176,13 @@ mod tests {
         core.inst_c_lwsp(&inst_type::inst_c_lwsp_code(1, 0x4));
         assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
         assert_eq!(0x888c, mem_stub.buffer.addr);
+    }
+
+    #[test]
+    fn test_inst_c_li() {
+        let mut core: RVCore = Default::default();
+        core.regs[2] = 0x0;
+        core.inst_c_li(&inst_type::inst_c_li_code(2, 0x1f));
+        assert_eq!(0x1f, core.regs[2]);
     }
 }

@@ -6,6 +6,7 @@ pub enum InstID {
     C_ADDI,
     C_SWSP,
     C_LWSP,
+    C_LI,
     NOP,
 }
 
@@ -20,5 +21,6 @@ pub const inst_info_table: &[InstInfo] = &[
     InstInfo { name: "c_addi" },
     InstInfo { name: "c_swsp" },
     InstInfo { name: "c_lwsp" },
+    InstInfo { name: "c_li" },
     InstInfo { name: "nop" },
 ];

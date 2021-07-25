@@ -80,3 +80,11 @@ pub fn inst_c_lwsp_code(rd: u32, offset: u32) -> InstType {
         id: InstID::C_LWSP,
     }
 }
+
+pub fn inst_c_li_code(rd: u32, imm: u32) -> InstType {
+    InstType {
+        data: (((imm >> 5) & 1) << 12) | (rd << 7) | ((imm & 0x1f) << 2) | 0x1 | (0x2 << 13),
+        len: 2,
+        id: InstID::C_LI,
+    }
+}

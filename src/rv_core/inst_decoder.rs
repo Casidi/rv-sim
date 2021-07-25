@@ -31,6 +31,7 @@ impl InstDecoder {
         match opcode {
             0x1 => match funct3 {
                 0x0 => inst.id = InstID::ADDI,
+                0x2 => inst.id = InstID::C_LI,
                 _ => panic!("Invalid instruction"),
             },
             0x2 => match funct3 {

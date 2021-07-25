@@ -1,6 +1,10 @@
 # rv-sim
 A RISC-V instruction-accurate simulator
 
+# Quick Start
+- Run simulator: ```cargo run```
+- Run all tests: ```cargo test```
+
 # Instruction Status
 Name       | Executed Count | Implemented
 ---------- | -------------  | -----------
@@ -8,7 +12,7 @@ c.addi     | 22             | :heavy_check_mark:
 c.swsp     | 22             | :heavy_check_mark:
 c.lwsp     | 21             | :heavy_check_mark:
 addi       | 14             | :heavy_check_mark:
-c.li       | 14             | 
+c.li       | 14             | :heavy_check_mark:
 sb         | 13             | 
 lw         | 11             | 
 c.mv       | 10             | 
