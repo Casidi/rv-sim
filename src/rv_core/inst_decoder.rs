@@ -56,6 +56,12 @@ impl InstDecoder {
             0x17 => {
                 inst.id = InstID::AUIPC;
             }
+            0x23 => match funct3 {
+                0x0 => {
+                    inst.id = InstID::SB;
+                }
+                _ => panic!("Invalid instruction"),
+            }
             _ => panic!("Invalid instruction"),
         }
     }

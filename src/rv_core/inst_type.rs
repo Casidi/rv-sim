@@ -12,11 +12,15 @@ impl InstType {
     }
 
     pub fn get_rs1(&self) -> usize {
-        ((self.data & 0x000f8000) >> 15) as usize
+        (((self.data >> 15) & 0x1f)) as usize
     }
 
     pub fn get_rs2(&self) -> usize {
         ((self.data >> 2) & 0x1f) as usize
+    }
+
+    pub fn get_rs2_stype(&self) -> usize {
+        ((self.data >> 20) & 0x1f) as usize
     }
 
     pub fn get_imm_itype(&self) -> u32 {
@@ -25,6 +29,10 @@ impl InstType {
 
     pub fn get_imm_utype(&self) -> u32 {
         self.data & 0xfffff000
+    }
+
+    pub fn get_imm_stype(&self) -> u32 {
+        ((self.data >> 7) & 0x1f) | (((self.data >> 25) & 0x7f) << 5)
     }
 
     pub fn get_imm_ci(&self) -> u32 {
@@ -86,5 +94,16 @@ pub fn inst_c_li_code(rd: u32, imm: u32) -> InstType {
         data: (((imm >> 5) & 1) << 12) | (rd << 7) | ((imm & 0x1f) << 2) | 0x1 | (0x2 << 13),
         len: 2,
         id: InstID::C_LI,
+    }
+}
+
+pub fn inst_sb_code(rs2: u32, rs1: u32, imm: u32) -> InstType {
+    InstType {
+        data: (((imm >> 5) & 0x7f) << 25) | ((imm & 0x1f) << 7)
+                | ((rs2 & 0x1f) << 20)
+                | ((rs1 & 0x1f) << 15)
+                | 0x23,
+        len: 4,
+        id: InstID::SB,
     }
 }
