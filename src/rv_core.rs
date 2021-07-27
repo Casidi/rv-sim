@@ -113,6 +113,7 @@ impl<'a> RVCore<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use inst_type::tests::*;
 
     #[derive(Default)]
     struct MemoryStub {
@@ -140,7 +141,7 @@ mod tests {
     fn test_inst_auipc() {
         let mut core: RVCore = Default::default();
         core.pc = 0x1234;
-        core.inst_auipc(&inst_type::inst_auipc_code(1, 0xffff1000));
+        core.inst_auipc(&inst_auipc_code(1, 0xffff1000));
         assert_eq!(0xffff1000 + 0x1234, core.regs[1]);
     }
 
@@ -148,7 +149,7 @@ mod tests {
     fn test_inst_addi() {
         let mut core: RVCore = Default::default();
         core.regs[2] = 0x1234;
-        core.inst_addi(&inst_type::inst_addi_code(1, 2, 0x7ff));
+        core.inst_addi(&inst_addi_code(1, 2, 0x7ff));
         assert_eq!(0x7ff + 0x1234, core.regs[1]);
     }
 
@@ -156,7 +157,7 @@ mod tests {
     fn test_inst_c_addi() {
         let mut core: RVCore = Default::default();
         core.regs[2] = 0x1234;
-        core.inst_c_addi(&inst_type::inst_c_addi_code(2, 0x1));
+        core.inst_c_addi(&inst_c_addi_code(2, 0x1));
         assert_eq!(0x1235, core.regs[2]);
     }
 
@@ -168,7 +169,7 @@ mod tests {
 
         core.regs[1] = 0x12345678; // Data
         core.regs[2] = 0x8888; // Address
-        core.inst_c_swsp(&inst_type::inst_c_swsp_code(1, 0x4));
+        core.inst_c_swsp(&inst_c_swsp_code(1, 0x4));
         assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
         assert_eq!(0x888c, mem_stub.buffer.addr);
         assert_eq!([0x78, 0x56, 0x34, 0x12].to_vec(), mem_stub.buffer.data);
@@ -181,7 +182,7 @@ mod tests {
         core.bind_mem(&mut mem_stub);
 
         core.regs[2] = 0x8888; // Address
-        core.inst_c_lwsp(&inst_type::inst_c_lwsp_code(1, 0x4));
+        core.inst_c_lwsp(&inst_c_lwsp_code(1, 0x4));
         assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
         assert_eq!(0x888c, mem_stub.buffer.addr);
     }
@@ -190,7 +191,7 @@ mod tests {
     fn test_inst_c_li() {
         let mut core: RVCore = Default::default();
         core.regs[2] = 0x0;
-        core.inst_c_li(&inst_type::inst_c_li_code(2, 0x1f));
+        core.inst_c_li(&inst_c_li_code(2, 0x1f));
         assert_eq!(0x1f, core.regs[2]);
     }
 
@@ -202,7 +203,7 @@ mod tests {
 
         core.regs[1] = 0xffffff78; // Data
         core.regs[2] = 0x8888; // Address
-        core.inst_sb(&inst_type::inst_sb_code(1, 2, 0xff));
+        core.inst_sb(&inst_sb_code(1, 2, 0xff));
         assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
         assert_eq!(0x8888 + 0xff, mem_stub.buffer.addr);
         assert_eq!([0x78].to_vec(), mem_stub.buffer.data);

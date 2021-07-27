@@ -30,7 +30,7 @@ impl InstDecoder {
         let funct3 = (inst_bytes >> 13) & 7;
         match opcode {
             0x1 => match funct3 {
-                0x0 => inst.id = InstID::ADDI,
+                0x0 => inst.id = InstID::C_ADDI,
                 0x2 => inst.id = InstID::C_LI,
                 _ => panic!("Invalid instruction"),
             },
@@ -70,7 +70,7 @@ impl InstDecoder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::rv_core::inst_type::*;
+    use crate::rv_core::inst_type::tests::*;
 
     #[test]
     fn test_decode() {
