@@ -6,16 +6,22 @@ use crate::memory_interface::{Payload, MemoryInterface, MemoryOperation};
 
 #[derive(Default)]
 pub struct RVCore<'a> {
-    pc: u32,
+    pub pc: u32,
     regs: [u32; 32],
     id_instance: inst_decoder::InstDecoder,
     mem_if: Option<&'a mut dyn MemoryInterface>,
 }
 
 impl<'a> RVCore<'a> {
-    fn step(&mut self, inst_bytes: u32) {
+    fn step(&mut self) {
+        let mut data = [0; 4];
+        self.read_memory(self.pc, &mut data);
+        let inst_bytes = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
+
         let inst = self.id_instance.decode(inst_bytes);
-        print!("PC = {:#08x}, {}\n", self.pc, inst_info::inst_info_table[inst.id as usize].name);
+        println!("{:#010x} ({:#010x}) {}", self.pc, inst_bytes,
+                    inst_info::inst_info_table[inst.id as usize].name);
+
         self.execute(&inst);
         self.pc += inst.len;
     }
@@ -37,7 +43,7 @@ impl<'a> RVCore<'a> {
     pub fn run(&mut self, num_steps: i32) {
         let mut step_count = 0;
         while step_count < num_steps {
-            self.step(0x00002197); //AUIPC
+            self.step();
             step_count += 1;
         }
     }
@@ -51,13 +57,17 @@ impl<'a> RVCore<'a> {
         self.mem_if.as_mut().unwrap().access_memory(&mut payload);
     }
 
-    fn read_memory(&mut self, address: u32, data: &[u8]) {
+    fn read_memory(&mut self, address: u32, data: &mut [u8]) {
         let mut payload = Payload {
             addr: address,
             data: data.to_vec(),
             op: MemoryOperation::READ,
         };
         self.mem_if.as_mut().unwrap().access_memory(&mut payload);
+
+        for i in 0..data.len() {
+            data[i] = payload.data[i];
+        }
     }
 
     pub fn bind_mem(&mut self, mem_if: &'a mut dyn MemoryInterface) {
@@ -90,8 +100,8 @@ impl<'a> RVCore<'a> {
     fn inst_c_lwsp(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_ci();
         let address = self.regs[2] + (((imm & 0x3) << 6) | (imm & 0x3c));
-        let data = [0; 4];
-        self.read_memory(address, &data);
+        let mut data = [0; 4];
+        self.read_memory(address, &mut data);
         if inst.get_rd() != 0 {
             self.regs[inst.get_rd()] = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
         }
@@ -106,8 +116,8 @@ impl<'a> RVCore<'a> {
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_itype();
         let address = self.regs[inst.get_rs1()] + (imm & 0xfff);
-        let data = [0; 4];
-        self.read_memory(address, &data);
+        let mut data = [0; 4];
+        self.read_memory(address, &mut data);
         if inst.get_rd() != 0 {
             self.regs[inst.get_rd()] = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
         }
@@ -137,15 +147,6 @@ mod tests {
             self.buffer.data = payload.data.clone();
             self.buffer.op = payload.op;
         }
-    }
-
-    #[test]
-    fn test_core_run() {
-        let mut core: RVCore = Default::default();
-        assert_eq!(0, core.pc);
-
-        core.run(5);
-        assert_eq!(20, core.pc);
     }
 
     #[test]

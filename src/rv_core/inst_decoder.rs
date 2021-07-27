@@ -32,14 +32,14 @@ impl InstDecoder {
             0x1 => match funct3 {
                 0x0 => inst.id = InstID::C_ADDI,
                 0x2 => inst.id = InstID::C_LI,
-                _ => panic!("Invalid instruction"),
+                _ => self.dump_invalid_inst(inst_bytes),
             },
             0x2 => match funct3 {
                 0x6 => inst.id = InstID::C_SWSP,
                 0x2 => inst.id = InstID::C_LWSP,
-                _ => panic!("Invalid instruction"),
+                _ => self.dump_invalid_inst(inst_bytes),
             },
-            _ => panic!("Invalid instruction"),
+            _ => self.dump_invalid_inst(inst_bytes),
         }
     }
 
@@ -49,21 +49,26 @@ impl InstDecoder {
         match opcode {
             0x3 => match funct3 {
                 0x2 => inst.id = InstID::LW,
-                _ => panic!("Invalid instruction"),
+                _ => self.dump_invalid_inst(inst_bytes),
             }
             0x13 => match funct3 {
                 0x0 => inst.id = InstID::ADDI,
-                _ => panic!("Invalid instruction"),
+                _ => self.dump_invalid_inst(inst_bytes),
             }
             0x17 => {
                 inst.id = InstID::AUIPC;
             }
             0x23 => match funct3 {
                 0x0 => inst.id = InstID::SB,
-                _ => panic!("Invalid instruction"),
+                _ => self.dump_invalid_inst(inst_bytes),
             }
-            _ => panic!("Invalid instruction"),
+            _ => self.dump_invalid_inst(inst_bytes),
         }
+    }
+
+    fn dump_invalid_inst(&self, inst_bytes: u32) {
+        println!("bytes = {:#x}", inst_bytes);
+        panic!("Invalid instruction");
     }
 }
 

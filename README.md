@@ -2,7 +2,7 @@
 A RISC-V instruction-accurate simulator
 
 ## Quick Start
-- Run simulator: ```cargo run```
+- Run simulator: ```cargo run <elf path>```
 - Run all tests: ```cargo test```
 
 ## Instruction Status
