@@ -14,7 +14,7 @@ c.lwsp     | 21             | :heavy_check_mark:
 addi       | 14             | :heavy_check_mark:
 c.li       | 14             | :heavy_check_mark:
 sb         | 13             | :heavy_check_mark:
-lw         | 11             | 
+lw         | 11             | :heavy_check_mark:
 c.mv       | 10             | 
 ret        | 10             | 
 c.beqz     | 9              | 

@@ -102,6 +102,17 @@ pub mod tests {
         }
     }
 
+    pub fn inst_lw_code(rd: u32, rs1: u32, imm: u32) -> InstType {
+        InstType {
+            data: ((imm & 0xfff) << 20)
+                    | ((rd & 0x1f) << 7)
+                    | ((rs1 & 0x1f) << 15)
+                    | 0x3 | (0x2 << 12),
+            len: 4,
+            id: InstID::LW,
+        }
+    }
+
     pub fn inst_sb_code(rs2: u32, rs1: u32, imm: u32) -> InstType {
         InstType {
             data: (((imm >> 5) & 0x7f) << 25) | ((imm & 0x1f) << 7)

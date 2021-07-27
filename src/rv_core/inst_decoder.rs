@@ -47,19 +47,19 @@ impl InstDecoder {
         let opcode = inst_bytes & 0x7f;
         let funct3 = (inst_bytes & 0x00007000) >> 12;
         match opcode {
-            0x13 => match funct3 {
-                0x0 => {
-                    inst.id = InstID::ADDI;
-                }
+            0x3 => match funct3 {
+                0x2 => inst.id = InstID::LW,
                 _ => panic!("Invalid instruction"),
-            },
+            }
+            0x13 => match funct3 {
+                0x0 => inst.id = InstID::ADDI,
+                _ => panic!("Invalid instruction"),
+            }
             0x17 => {
                 inst.id = InstID::AUIPC;
             }
             0x23 => match funct3 {
-                0x0 => {
-                    inst.id = InstID::SB;
-                }
+                0x0 => inst.id = InstID::SB,
                 _ => panic!("Invalid instruction"),
             }
             _ => panic!("Invalid instruction"),

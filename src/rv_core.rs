@@ -28,6 +28,7 @@ impl<'a> RVCore<'a> {
             InstID::C_SWSP => self.inst_c_swsp(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
             InstID::C_LI => self.inst_c_li(inst),
+            InstID::LW => self.inst_lw(inst),
             InstID::SB => self.inst_sb(inst),
             InstID::NOP => self.inst_nop(inst),
         }
@@ -102,9 +103,19 @@ impl<'a> RVCore<'a> {
         }
     }
 
+    fn inst_lw(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_itype();
+        let address = self.regs[inst.get_rs1()] + (imm & 0xfff);
+        let data = [0; 4];
+        self.read_memory(address, &data);
+        if inst.get_rd() != 0 {
+            self.regs[inst.get_rd()] = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
+        }
+    }
+
     fn inst_sb(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_stype();
-        let address = self.regs[inst.get_rs1()] + (imm & 0x7ff);
+        let address = self.regs[inst.get_rs1()] + (imm & 0xfff);
         let data = self.regs[inst.get_rs2_stype()];
         self.write_memory(address, &data.to_le_bytes()[..1]);
     }
@@ -193,6 +204,18 @@ mod tests {
         core.regs[2] = 0x0;
         core.inst_c_li(&inst_c_li_code(2, 0x1f));
         assert_eq!(0x1f, core.regs[2]);
+    }
+
+    #[test]
+    fn test_inst_lw() {
+        let mut core: RVCore = Default::default();
+        let mut mem_stub: MemoryStub = Default::default();
+        core.bind_mem(&mut mem_stub);
+
+        core.regs[1] = 0x8888; // Address
+        core.inst_lw(&inst_lw_code(2, 1, 0xff0));
+        assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
+        assert_eq!(0x8888 + 0xff0, mem_stub.buffer.addr);
     }
 
     #[test]
