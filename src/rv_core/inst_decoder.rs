@@ -32,6 +32,12 @@ impl InstDecoder {
             0x1 => match funct3 {
                 0x0 => inst.id = InstID::C_ADDI,
                 0x2 => inst.id = InstID::C_LI,
+                0x4 => {
+                    match ((inst_bytes >> 12) & 1, (inst_bytes >> 5) & 0b11) {
+                        (0, 0) => inst.id = InstID::C_SUB,
+                        (_, _) => self.dump_invalid_inst(inst_bytes),
+                    }
+                }
                 _ => self.dump_invalid_inst(inst_bytes),
             },
             0x2 => match funct3 {

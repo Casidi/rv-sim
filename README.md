@@ -35,7 +35,7 @@ beqz       | 4              |
 c.jalr     | 4              | 
 li         | 4              | 
 bne        | 4              | 
-c.sub      | 3              | 
+c.sub      | 3              | :heavy_check_mark:
 srai       | 3              | 
 bgeu       | 2              | 
 andi       | 2              | 

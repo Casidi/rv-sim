@@ -59,6 +59,7 @@ impl<'a> RVCore<'a> {
             InstID::C_LWSP => self.inst_c_lwsp(inst),
             InstID::C_LI => self.inst_c_li(inst),
             InstID::C_MV => self.inst_c_mv(inst),
+            InstID::C_SUB => self.inst_c_sub(inst),
             InstID::LW => self.inst_lw(inst),
             InstID::SB => self.inst_sb(inst),
             InstID::NOP => self.inst_nop(inst),
@@ -136,6 +137,12 @@ impl<'a> RVCore<'a> {
 
     fn inst_c_mv(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(), self.regs.read(inst.get_rs2()));
+    }
+
+    fn inst_c_sub(&mut self, inst: &inst_type::InstType) {
+        let a = self.regs.read(inst.get_rd_3b());
+        let b = self.regs.read(inst.get_rs2_3b());
+        self.regs.write(inst.get_rd_3b(), a - b);
     }
 
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
@@ -237,6 +244,15 @@ mod tests {
         core.regs.write(3, 0xfafafafa);
         core.inst_c_mv(&inst_c_mv_code(2, 3));
         assert_eq!(0xfafafafa, core.regs.read(2));
+    }
+
+    #[test]
+    fn test_inst_c_sub() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(8, 0xffffffff);
+        core.regs.write(9, 0xf0f00f0f);
+        core.inst_c_sub(&inst_c_sub_code(8, 9));
+        assert_eq!(0x0f0ff0f0, core.regs.read(8));
     }
 
     #[test]

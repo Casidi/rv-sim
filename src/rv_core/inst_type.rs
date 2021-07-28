@@ -11,12 +11,20 @@ impl InstType {
         ((self.data >> 7) & 0x1f) as usize
     }
 
+    pub fn get_rd_3b(&self) -> usize {
+        (((self.data >> 7) & 0x7) + 8) as usize
+    }
+
     pub fn get_rs1(&self) -> usize {
         (((self.data >> 15) & 0x1f)) as usize
     }
 
     pub fn get_rs2(&self) -> usize {
         ((self.data >> 2) & 0x1f) as usize
+    }
+
+    pub fn get_rs2_3b(&self) -> usize {
+        (((self.data >> 2) & 0x7) + 8) as usize
     }
 
     pub fn get_rs2_stype(&self) -> usize {
@@ -107,6 +115,14 @@ pub mod tests {
             data: (rd << 7) | (rs2 << 2) | 0x2 | (0x8 << 12),
             len: 2,
             id: InstID::C_MV,
+        }
+    }
+
+    pub fn inst_c_sub_code(rd: u32, rs2: u32) -> InstType {
+        InstType {
+            data: ((rd & 0x7) << 7) | ((rs2 & 0x7) << 2) | 0x1 | (0x8 << 12),
+            len: 2,
+            id: InstID::C_SUB,
         }
     }
 
