@@ -5,6 +5,11 @@ A RISC-V instruction-accurate simulator
 - Run simulator: ```cargo run <elf path>```
 - Run all tests: ```cargo test```
 
+## TODO
+- [ ] Encapsulate integer registers into a struct, use read/write API to access
+- [ ] Implement one RV64I instruction and reserve the flexibility for 64-bit mode
+- [ ] Pass [riscv-tests](https://github.com/riscv/riscv-tests)
+
 ## Instruction Status
 Name       | Executed Count | Implemented
 ---------- | -------------  | -----------
