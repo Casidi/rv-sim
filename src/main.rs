@@ -15,7 +15,7 @@ fn main() {
 
     let elf_path = &args[1];
 
-    let mut core: rv_core::RVCore = Default::default();
+    let mut core: rv_core::RVCore = rv_core::RVCore::new();
     let mut mem = memory_model::MemoryModel::new();
 
     let entry = load_elf(&mut mem, elf_path);

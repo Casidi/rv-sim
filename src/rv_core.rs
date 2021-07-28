@@ -4,15 +4,39 @@ mod inst_decoder;
 use crate::rv_core::inst_info::InstID;
 use crate::memory_interface::{Payload, MemoryInterface, MemoryOperation};
 
-#[derive(Default)]
+struct XRegisters {
+    reg_bank: [u32; 32],
+}
+
+impl XRegisters {
+    fn read(&self, i: usize) -> u32 {
+        self.reg_bank[i]
+    }
+
+    fn write(&mut self, i: usize, val: u32) {
+        if i != 0 {
+            self.reg_bank[i] = val;
+        }
+    }
+}
+
 pub struct RVCore<'a> {
     pub pc: u32,
-    regs: [u32; 32],
+    regs: XRegisters,
     id_instance: inst_decoder::InstDecoder,
     mem_if: Option<&'a mut dyn MemoryInterface>,
 }
 
 impl<'a> RVCore<'a> {
+    pub fn new() -> RVCore<'a> {
+        RVCore {
+            pc: 0,
+            regs: XRegisters { reg_bank: [0; 32] },
+            id_instance: inst_decoder::InstDecoder {},
+            mem_if: None,
+        }
+    }
+
     fn step(&mut self) {
         let mut data = [0; 4];
         self.read_memory(self.pc, &mut data);
@@ -77,56 +101,50 @@ impl<'a> RVCore<'a> {
     fn inst_nop(&mut self, _inst: &inst_type::InstType) {}
 
     fn inst_auipc(&mut self, inst: &inst_type::InstType) {
-        self.regs[inst.get_rd()] = self.pc + inst.get_imm_utype();
+        self.regs.write(inst.get_rd(), self.pc + inst.get_imm_utype());
     }
 
     fn inst_addi(&mut self, inst: &inst_type::InstType) {
-        self.regs[inst.get_rd()] = self.regs[inst.get_rs1()] + inst.get_imm_itype();
+        self.regs.write(inst.get_rd(),
+            self.regs.read(inst.get_rs1()) + inst.get_imm_itype());
     }
 
     fn inst_c_addi(&mut self, inst: &inst_type::InstType) {
-        if inst.get_rd() != 0 {
-            self.regs[inst.get_rd()] = self.regs[inst.get_rd()] + inst.get_imm_ci();
-        }
+        self.regs.write(inst.get_rd(),
+            self.regs.read(inst.get_rd()) + inst.get_imm_ci());
     }
 
     fn inst_c_swsp(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_css();
-        let address = self.regs[2] + (((imm & 0x3) << 6) | (imm & 0x3c));
-        let data = self.regs[inst.get_rs2()];
+        let address = self.regs.read(2) + (((imm & 0x3) << 6) | (imm & 0x3c));
+        let data = self.regs.read(inst.get_rs2());
         self.write_memory(address, &data.to_le_bytes());
     }
 
     fn inst_c_lwsp(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_ci();
-        let address = self.regs[2] + (((imm & 0x3) << 6) | (imm & 0x3c));
+        let address = self.regs.read(2) + (((imm & 0x3) << 6) | (imm & 0x3c));
         let mut data = [0; 4];
         self.read_memory(address, &mut data);
-        if inst.get_rd() != 0 {
-            self.regs[inst.get_rd()] = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
-        }
+        self.regs.write(inst.get_rd(), unsafe {std::mem::transmute::<[u8; 4], u32>(data)});
     }
 
     fn inst_c_li(&mut self, inst: &inst_type::InstType) {
-        if inst.get_rd() != 0 {
-            self.regs[inst.get_rd()] = inst.get_imm_ci();
-        }
+        self.regs.write(inst.get_rd(), inst.get_imm_ci());
     }
 
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_itype();
-        let address = self.regs[inst.get_rs1()] + (imm & 0xfff);
+        let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
         let mut data = [0; 4];
         self.read_memory(address, &mut data);
-        if inst.get_rd() != 0 {
-            self.regs[inst.get_rd()] = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
-        }
+        self.regs.write(inst.get_rd(), unsafe {std::mem::transmute::<[u8; 4], u32>(data)});
     }
 
     fn inst_sb(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_stype();
-        let address = self.regs[inst.get_rs1()] + (imm & 0xfff);
-        let data = self.regs[inst.get_rs2_stype()];
+        let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
+        let data = self.regs.read(inst.get_rs2_stype());
         self.write_memory(address, &data.to_le_bytes()[..1]);
     }
 }
@@ -151,36 +169,36 @@ mod tests {
 
     #[test]
     fn test_inst_auipc() {
-        let mut core: RVCore = Default::default();
+        let mut core: RVCore = RVCore::new();
         core.pc = 0x1234;
         core.inst_auipc(&inst_auipc_code(1, 0xffff1000));
-        assert_eq!(0xffff1000 + 0x1234, core.regs[1]);
+        assert_eq!(0xffff1000 + 0x1234, core.regs.read(1));
     }
 
     #[test]
     fn test_inst_addi() {
-        let mut core: RVCore = Default::default();
-        core.regs[2] = 0x1234;
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x1234);
         core.inst_addi(&inst_addi_code(1, 2, 0x7ff));
-        assert_eq!(0x7ff + 0x1234, core.regs[1]);
+        assert_eq!(0x7ff + 0x1234, core.regs.read(1));
     }
 
     #[test]
     fn test_inst_c_addi() {
-        let mut core: RVCore = Default::default();
-        core.regs[2] = 0x1234;
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x1234);
         core.inst_c_addi(&inst_c_addi_code(2, 0x1));
-        assert_eq!(0x1235, core.regs[2]);
+        assert_eq!(0x1235, core.regs.read(2));
     }
 
     #[test]
     fn test_inst_c_swsp() {
-        let mut core: RVCore = Default::default();
+        let mut core: RVCore = RVCore::new();
         let mut mem_stub: MemoryStub = Default::default();
         core.bind_mem(&mut mem_stub);
 
-        core.regs[1] = 0x12345678; // Data
-        core.regs[2] = 0x8888; // Address
+        core.regs.write(1, 0x12345678); // Data
+        core.regs.write(2, 0x8888); // Address
         core.inst_c_swsp(&inst_c_swsp_code(1, 0x4));
         assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
         assert_eq!(0x888c, mem_stub.buffer.addr);
@@ -189,11 +207,11 @@ mod tests {
 
     #[test]
     fn test_inst_c_lwsp() {
-        let mut core: RVCore = Default::default();
+        let mut core: RVCore = RVCore::new();
         let mut mem_stub: MemoryStub = Default::default();
         core.bind_mem(&mut mem_stub);
 
-        core.regs[2] = 0x8888; // Address
+        core.regs.write(2, 0x8888); // Address
         core.inst_c_lwsp(&inst_c_lwsp_code(1, 0x4));
         assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
         assert_eq!(0x888c, mem_stub.buffer.addr);
@@ -201,19 +219,19 @@ mod tests {
 
     #[test]
     fn test_inst_c_li() {
-        let mut core: RVCore = Default::default();
-        core.regs[2] = 0x0;
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x0);
         core.inst_c_li(&inst_c_li_code(2, 0x1f));
-        assert_eq!(0x1f, core.regs[2]);
+        assert_eq!(0x1f, core.regs.read(2));
     }
 
     #[test]
     fn test_inst_lw() {
-        let mut core: RVCore = Default::default();
+        let mut core: RVCore = RVCore::new();
         let mut mem_stub: MemoryStub = Default::default();
         core.bind_mem(&mut mem_stub);
 
-        core.regs[1] = 0x8888; // Address
+        core.regs.write(1, 0x8888); // Address
         core.inst_lw(&inst_lw_code(2, 1, 0xff0));
         assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
         assert_eq!(0x8888 + 0xff0, mem_stub.buffer.addr);
@@ -221,12 +239,12 @@ mod tests {
 
     #[test]
     fn test_inst_sb() {
-        let mut core: RVCore = Default::default();
+        let mut core: RVCore = RVCore::new();
         let mut mem_stub: MemoryStub = Default::default();
         core.bind_mem(&mut mem_stub);
 
-        core.regs[1] = 0xffffff78; // Data
-        core.regs[2] = 0x8888; // Address
+        core.regs.write(1, 0xffffff78); // Data
+        core.regs.write(2, 0x8888); // Address
         core.inst_sb(&inst_sb_code(1, 2, 0xff));
         assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
         assert_eq!(0x8888 + 0xff, mem_stub.buffer.addr);
