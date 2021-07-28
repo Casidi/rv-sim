@@ -102,6 +102,14 @@ pub mod tests {
         }
     }
 
+    pub fn inst_c_mv_code(rd: u32, rs2: u32) -> InstType {
+        InstType {
+            data: (rd << 7) | (rs2 << 2) | 0x2 | (0x8 << 12),
+            len: 2,
+            id: InstID::C_MV,
+        }
+    }
+
     pub fn inst_lw_code(rd: u32, rs1: u32, imm: u32) -> InstType {
         InstType {
             data: ((imm & 0xfff) << 20)

@@ -35,8 +35,14 @@ impl InstDecoder {
                 _ => self.dump_invalid_inst(inst_bytes),
             },
             0x2 => match funct3 {
-                0x6 => inst.id = InstID::C_SWSP,
                 0x2 => inst.id = InstID::C_LWSP,
+                0x4 => {
+                    match ((inst_bytes >> 12) & 1, (inst_bytes >> 2) & 0x1f) {
+                        (0, _) => inst.id = InstID::C_MV,
+                        (_, _) => self.dump_invalid_inst(inst_bytes),
+                    }
+                }
+                0x6 => inst.id = InstID::C_SWSP,
                 _ => self.dump_invalid_inst(inst_bytes),
             },
             _ => self.dump_invalid_inst(inst_bytes),

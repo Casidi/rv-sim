@@ -6,7 +6,7 @@ A RISC-V instruction-accurate simulator
 - Run all tests: ```cargo test```
 
 ## TODO
-- [ ] Encapsulate integer registers into a struct, use read/write API to access
+- [x] Encapsulate integer registers into a struct, use read/write API to access
 - [ ] Implement one RV64I instruction and reserve the flexibility for 64-bit mode
 - [ ] Pass [riscv-tests](https://github.com/riscv/riscv-tests)
 
@@ -20,7 +20,7 @@ addi       | 14             | :heavy_check_mark:
 c.li       | 14             | :heavy_check_mark:
 sb         | 13             | :heavy_check_mark:
 lw         | 11             | :heavy_check_mark:
-c.mv       | 10             | 
+c.mv       | 10             | :heavy_check_mark:
 ret        | 10             | 
 c.beqz     | 9              | 
 c.jal      | 6              | 
