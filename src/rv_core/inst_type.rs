@@ -1,8 +1,9 @@
 use crate::rv_core::inst_info::InstID;
+type AddressType = u64;
 
 pub struct InstType {
-    pub data: u32,
-    pub len: u32,
+    pub data: AddressType,
+    pub len: AddressType,
     pub id: InstID,
 }
 
@@ -31,23 +32,23 @@ impl InstType {
         ((self.data >> 20) & 0x1f) as usize
     }
 
-    pub fn get_imm_itype(&self) -> u32 {
+    pub fn get_imm_itype(&self) -> AddressType {
         self.data >> 20
     }
 
-    pub fn get_imm_utype(&self) -> u32 {
+    pub fn get_imm_utype(&self) -> AddressType {
         self.data & 0xfffff000
     }
 
-    pub fn get_imm_stype(&self) -> u32 {
+    pub fn get_imm_stype(&self) -> AddressType {
         ((self.data >> 7) & 0x1f) | (((self.data >> 25) & 0x7f) << 5)
     }
 
-    pub fn get_imm_ci(&self) -> u32 {
+    pub fn get_imm_ci(&self) -> AddressType {
         ((self.data >> 2) & 0x1f) | (((self.data >> 12) & 1) << 5)
     }
 
-    pub fn get_imm_css(&self) -> u32 {
+    pub fn get_imm_css(&self) -> AddressType {
         (self.data >> 7) & 0x3f
     }
 }
@@ -55,9 +56,10 @@ impl InstType {
 #[cfg(test)]
 pub mod tests {
     use super::InstType;
+    use super::AddressType;
     use crate::rv_core::inst_info::InstID;
 
-    pub fn inst_auipc_code(rd: u32, imm: u32) -> InstType {
+    pub fn inst_auipc_code(rd: AddressType, imm: AddressType) -> InstType {
         InstType {
             data: (rd << 7) | (imm & 0xfffff000) | 0x17,
             len: 4,
@@ -65,7 +67,7 @@ pub mod tests {
         }
     }
 
-    pub fn inst_addi_code(rd: u32, rs1: u32, imm: u32) -> InstType {
+    pub fn inst_addi_code(rd: AddressType, rs1: AddressType, imm: AddressType) -> InstType {
         InstType {
             data: (imm << 20) | (rs1 << 15) | (rd << 7) | 0x13,
             len: 4,
@@ -73,7 +75,7 @@ pub mod tests {
         }
     }
 
-    pub fn inst_c_addi_code(rd: u32, imm: u32) -> InstType {
+    pub fn inst_c_addi_code(rd: AddressType, imm: AddressType) -> InstType {
         InstType {
             data: (((imm >> 5) & 1) << 12) | (rd << 7) | ((imm & 0x1f) << 2) | 0x1,
             len: 2,
@@ -81,7 +83,7 @@ pub mod tests {
         }
     }
 
-    pub fn inst_c_swsp_code(rs2: u32, imm: u32) -> InstType {
+    pub fn inst_c_swsp_code(rs2: AddressType, imm: AddressType) -> InstType {
         InstType {
             data: (((imm >> 2) & 0xf) << 9) | (((imm >> 6) & 0x3) << 7) | ((rs2 & 0x1f) << 2)
                     | 0x2 | (0x6 << 13),
@@ -90,7 +92,7 @@ pub mod tests {
         }
     }
 
-    pub fn inst_c_lwsp_code(rd: u32, offset: u32) -> InstType {
+    pub fn inst_c_lwsp_code(rd: AddressType, offset: AddressType) -> InstType {
         InstType {
             data: (((offset >> 2) & 0x7) << 4)
                     | (((offset >> 6) & 0x3) << 2)
@@ -102,7 +104,7 @@ pub mod tests {
         }
     }
 
-    pub fn inst_c_li_code(rd: u32, imm: u32) -> InstType {
+    pub fn inst_c_li_code(rd: AddressType, imm: AddressType) -> InstType {
         InstType {
             data: (((imm >> 5) & 1) << 12) | (rd << 7) | ((imm & 0x1f) << 2) | 0x1 | (0x2 << 13),
             len: 2,
@@ -110,7 +112,7 @@ pub mod tests {
         }
     }
 
-    pub fn inst_c_mv_code(rd: u32, rs2: u32) -> InstType {
+    pub fn inst_c_mv_code(rd: AddressType, rs2: AddressType) -> InstType {
         InstType {
             data: (rd << 7) | (rs2 << 2) | 0x2 | (0x8 << 12),
             len: 2,
@@ -118,7 +120,7 @@ pub mod tests {
         }
     }
 
-    pub fn inst_c_sub_code(rd: u32, rs2: u32) -> InstType {
+    pub fn inst_c_sub_code(rd: AddressType, rs2: AddressType) -> InstType {
         InstType {
             data: ((rd & 0x7) << 7) | ((rs2 & 0x7) << 2) | 0x1 | (0x8 << 12),
             len: 2,
@@ -126,7 +128,7 @@ pub mod tests {
         }
     }
 
-    pub fn inst_lw_code(rd: u32, rs1: u32, imm: u32) -> InstType {
+    pub fn inst_lw_code(rd: AddressType, rs1: AddressType, imm: AddressType) -> InstType {
         InstType {
             data: ((imm & 0xfff) << 20)
                     | ((rd & 0x1f) << 7)
@@ -137,7 +139,7 @@ pub mod tests {
         }
     }
 
-    pub fn inst_sb_code(rs2: u32, rs1: u32, imm: u32) -> InstType {
+    pub fn inst_sb_code(rs2: AddressType, rs1: AddressType, imm: AddressType) -> InstType {
         InstType {
             data: (((imm >> 5) & 0x7f) << 25) | ((imm & 0x1f) << 7)
                     | ((rs2 & 0x1f) << 20)

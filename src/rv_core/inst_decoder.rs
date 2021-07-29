@@ -1,11 +1,13 @@
 use crate::rv_core::inst_info::InstID;
 use crate::rv_core::inst_type::InstType;
 
+type AddressType = u64;
+
 #[derive(Default)]
 pub struct InstDecoder {}
 
 impl InstDecoder {
-    pub fn decode(&self, inst_bytes: u32) -> InstType {
+    pub fn decode(&self, inst_bytes: AddressType) -> InstType {
         let mut new_inst = InstType {
             data: inst_bytes,
             len: 0,
@@ -25,7 +27,7 @@ impl InstDecoder {
         new_inst
     }
 
-    fn decode_inst_compressed(&self, inst_bytes: u32, inst: &mut InstType) {
+    fn decode_inst_compressed(&self, inst_bytes: AddressType, inst: &mut InstType) {
         let opcode = inst_bytes & 0x3;
         let funct3 = (inst_bytes >> 13) & 7;
         match opcode {
@@ -55,7 +57,7 @@ impl InstDecoder {
         }
     }
 
-    fn decode_inst_4byte(&self, inst_bytes: u32, inst: &mut InstType) {
+    fn decode_inst_4byte(&self, inst_bytes: AddressType, inst: &mut InstType) {
         let opcode = inst_bytes & 0x7f;
         let funct3 = (inst_bytes & 0x00007000) >> 12;
         match opcode {
@@ -78,7 +80,7 @@ impl InstDecoder {
         }
     }
 
-    fn dump_invalid_inst(&self, inst_bytes: u32) {
+    fn dump_invalid_inst(&self, inst_bytes: AddressType) {
         println!("bytes = {:#x}", inst_bytes);
         panic!("Invalid instruction");
     }

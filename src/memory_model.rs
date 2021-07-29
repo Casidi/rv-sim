@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use crate::memory_interface::{Payload, MemoryInterface, MemoryOperation};
+type AddressType = u64;
 
 pub struct MemoryModel {
-    data: HashMap<u32, [u8; 32]>,
+    data: HashMap<AddressType, [u8; 32]>,
 }
 
 impl MemoryInterface for MemoryModel {
@@ -10,12 +11,12 @@ impl MemoryInterface for MemoryModel {
         match payload.op {
             MemoryOperation::READ => {
                 for i in 0..payload.data.len() {
-                    payload.data[i] = self.read_byte(payload.addr + i as u32);
+                    payload.data[i] = self.read_byte(payload.addr + i as AddressType);
                 }
             }
             MemoryOperation::WRITE => {
                 for i in 0..payload.data.len() {
-                    self.write_byte(payload.addr + i as u32, payload.data[i]);
+                    self.write_byte(payload.addr + i as AddressType, payload.data[i]);
                 }
             }
             MemoryOperation::INVALID => panic!("Invalid mem op"),
@@ -30,7 +31,7 @@ impl MemoryModel {
         }
     }
 
-    pub fn read_byte(&mut self, addr: u32) -> u8 {
+    pub fn read_byte(&mut self, addr: AddressType) -> u8 {
         let block_base = addr & 0xffffffe0;
         let block_offset = addr - block_base;
         if !self.data.contains_key(&block_base) {
@@ -41,7 +42,7 @@ impl MemoryModel {
         block[block_offset as usize]
     }
 
-    pub fn write_byte(&mut self, addr: u32, value: u8) {
+    pub fn write_byte(&mut self, addr: AddressType, value: u8) {
         let block_base = addr & 0xffffffe0;
         let block_offset = addr - block_base;
         if !self.data.contains_key(&block_base) {

@@ -4,16 +4,18 @@ mod inst_decoder;
 use crate::rv_core::inst_info::InstID;
 use crate::memory_interface::{Payload, MemoryInterface, MemoryOperation};
 
+type AddressType = u64;
+
 struct XRegisters {
-    reg_bank: [u32; 32],
+    reg_bank: [AddressType; 32],
 }
 
 impl XRegisters {
-    fn read(&self, i: usize) -> u32 {
+    fn read(&self, i: usize) -> AddressType {
         self.reg_bank[i]
     }
 
-    fn write(&mut self, i: usize, val: u32) {
+    fn write(&mut self, i: usize, val: AddressType) {
         if i != 0 {
             self.reg_bank[i] = val;
         }
@@ -21,7 +23,7 @@ impl XRegisters {
 }
 
 pub struct RVCore<'a> {
-    pub pc: u32,
+    pub pc: AddressType,
     regs: XRegisters,
     id_instance: inst_decoder::InstDecoder,
     mem_if: Option<&'a mut dyn MemoryInterface>,
@@ -38,9 +40,9 @@ impl<'a> RVCore<'a> {
     }
 
     fn step(&mut self) {
-        let mut data = [0; 4];
+        let mut data = [0; std::mem::size_of::<AddressType>()];
         self.read_memory(self.pc, &mut data);
-        let inst_bytes = unsafe {std::mem::transmute::<[u8; 4], u32>(data)};
+        let inst_bytes = RVCore::byte_array_to_addr_type(&data);
 
         let inst = self.id_instance.decode(inst_bytes);
         println!("{:#010x} ({:#010x}) {}", self.pc, inst_bytes,
@@ -74,7 +76,7 @@ impl<'a> RVCore<'a> {
         }
     }
 
-    fn write_memory(&mut self, address: u32, data: &[u8]) {
+    fn write_memory(&mut self, address: AddressType, data: &[u8]) {
         let mut payload = Payload {
             addr: address,
             data: data.to_vec(),
@@ -83,7 +85,7 @@ impl<'a> RVCore<'a> {
         self.mem_if.as_mut().unwrap().access_memory(&mut payload);
     }
 
-    fn read_memory(&mut self, address: u32, data: &mut [u8]) {
+    fn read_memory(&mut self, address: AddressType, data: &mut [u8]) {
         let mut payload = Payload {
             addr: address,
             data: data.to_vec(),
@@ -98,6 +100,11 @@ impl<'a> RVCore<'a> {
 
     pub fn bind_mem(&mut self, mem_if: &'a mut dyn MemoryInterface) {
         self.mem_if = Some(mem_if);
+    }
+
+    fn byte_array_to_addr_type(data: &[u8; 8]) -> AddressType {
+        unsafe {std::mem::transmute::<[u8; std::mem::size_of::<AddressType>()],
+                AddressType>(*data)}
     }
 
     fn inst_nop(&mut self, _inst: &inst_type::InstType) {}
@@ -126,9 +133,9 @@ impl<'a> RVCore<'a> {
     fn inst_c_lwsp(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_ci();
         let address = self.regs.read(2) + (((imm & 0x3) << 6) | (imm & 0x3c));
-        let mut data = [0; 4];
+        let mut data = [0; std::mem::size_of::<AddressType>()];
         self.read_memory(address, &mut data);
-        self.regs.write(inst.get_rd(), unsafe {std::mem::transmute::<[u8; 4], u32>(data)});
+        self.regs.write(inst.get_rd(), RVCore::byte_array_to_addr_type(&data));
     }
 
     fn inst_c_li(&mut self, inst: &inst_type::InstType) {
@@ -148,9 +155,9 @@ impl<'a> RVCore<'a> {
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_itype();
         let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
-        let mut data = [0; 4];
+        let mut data = [0; std::mem::size_of::<AddressType>()];
         self.read_memory(address, &mut data);
-        self.regs.write(inst.get_rd(), unsafe {std::mem::transmute::<[u8; 4], u32>(data)});
+        self.regs.write(inst.get_rd(), RVCore::byte_array_to_addr_type(&data));
     }
 
     fn inst_sb(&mut self, inst: &inst_type::InstType) {
@@ -214,7 +221,7 @@ mod tests {
         core.inst_c_swsp(&inst_c_swsp_code(1, 0x4));
         assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
         assert_eq!(0x888c, mem_stub.buffer.addr);
-        assert_eq!([0x78, 0x56, 0x34, 0x12].to_vec(), mem_stub.buffer.data);
+        assert_eq!([0x78, 0x56, 0x34, 0x12, 0,0,0,0].to_vec(), mem_stub.buffer.data);
     }
 
     #[test]

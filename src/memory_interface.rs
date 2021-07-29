@@ -1,3 +1,5 @@
+type AddressType = u64;
+
 #[derive(PartialEq, Debug, Copy, Clone)]
 #[allow(non_camel_case_types)]
 pub enum MemoryOperation {
@@ -14,7 +16,7 @@ impl Default for MemoryOperation {
 
 #[derive(Default)]
 pub struct Payload {
-    pub addr: u32,
+    pub addr: AddressType,
     pub data: Vec<u8>,
     pub op: MemoryOperation,
 }
