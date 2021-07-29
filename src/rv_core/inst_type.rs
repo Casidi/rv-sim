@@ -48,6 +48,10 @@ impl InstType {
         ((self.data >> 2) & 0x1f) | (((self.data >> 12) & 1) << 5)
     }
 
+    pub fn get_imm_cj(&self) -> AddressType {
+        (self.data >> 2) & 0x7ff
+    }
+
     pub fn get_imm_css(&self) -> AddressType {
         (self.data >> 7) & 0x3f
     }
@@ -80,6 +84,22 @@ pub mod tests {
             data: (((imm >> 5) & 1) << 12) | (rd << 7) | ((imm & 0x1f) << 2) | 0x1,
             len: 2,
             id: InstID::C_ADDI,
+        }
+    }
+
+    pub fn inst_c_jal_code(imm: AddressType) -> InstType {
+        InstType {
+            data: 0x1 | (1 << 13)
+                        | (((imm >> 11) & 1) << 12)
+                        | (((imm >> 4) & 1) << 11)
+                        | (((imm >> 8) & 3) << 9)
+                        | (((imm >> 10) & 1) << 8)
+                        | (((imm >> 6) & 1) << 7)
+                        | (((imm >> 7) & 1) << 6)
+                        | (((imm >> 1) & 7) << 3)
+                        | (((imm >> 5) & 1) << 2),
+            len: 2,
+            id: InstID::C_JAL,
         }
     }
 

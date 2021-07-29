@@ -33,6 +33,7 @@ impl InstDecoder {
         match opcode {
             0x1 => match funct3 {
                 0x0 => inst.id = InstID::C_ADDI,
+                0x1 => inst.id = InstID::C_JAL,
                 0x2 => inst.id = InstID::C_LI,
                 0x4 => {
                     match ((inst_bytes >> 12) & 1, (inst_bytes >> 5) & 0b11) {

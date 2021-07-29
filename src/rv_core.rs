@@ -49,7 +49,10 @@ impl<'a> RVCore<'a> {
                     inst_info::inst_info_table[inst.id as usize].name);
 
         self.execute(&inst);
-        self.pc += inst.len;
+        match inst.id {
+            InstID::C_JAL => {}
+            _ => self.pc += inst.len,
+        }
     }
 
     fn execute(&mut self, inst: &inst_type::InstType) {
@@ -57,6 +60,7 @@ impl<'a> RVCore<'a> {
             InstID::AUIPC => self.inst_auipc(inst),
             InstID::ADDI => self.inst_addi(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
+            InstID::C_JAL => self.inst_c_jal(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
             InstID::C_LI => self.inst_c_li(inst),
@@ -123,6 +127,20 @@ impl<'a> RVCore<'a> {
             self.regs.read(inst.get_rd()) + inst.get_imm_ci());
     }
 
+    fn inst_c_jal(&mut self, inst: &inst_type::InstType) {
+        self.regs.write(1, self.pc + 2);
+        let imm = inst.get_imm_cj();
+        let mut offset = ((imm >> 10) & 1) << 11;
+        offset |= ((imm >> 9) & 1) << 4;
+        offset |= ((imm >> 7) & 3) << 8;
+        offset |= ((imm >> 6) & 1) << 10;
+        offset |= ((imm >> 5) & 1) << 6;
+        offset |= ((imm >> 4) & 1) << 7;
+        offset |= ((imm >> 1) & 7) << 1;
+        offset |= ((imm >> 0) & 1) << 5;
+        self.pc += offset;
+    }
+
     fn inst_c_swsp(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_css();
         let address = self.regs.read(2) + (((imm & 0x3) << 6) | (imm & 0x3c));
@@ -149,7 +167,7 @@ impl<'a> RVCore<'a> {
     fn inst_c_sub(&mut self, inst: &inst_type::InstType) {
         let a = self.regs.read(inst.get_rd_3b());
         let b = self.regs.read(inst.get_rs2_3b());
-        self.regs.write(inst.get_rd_3b(), a - b);
+        self.regs.write(inst.get_rd_3b(), a.wrapping_sub(b));
     }
 
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
@@ -208,6 +226,15 @@ mod tests {
         core.regs.write(2, 0x1234);
         core.inst_c_addi(&inst_c_addi_code(2, 0x1));
         assert_eq!(0x1235, core.regs.read(2));
+    }
+
+    #[test]
+    fn test_inst_c_jal() {
+        let mut core: RVCore = RVCore::new();
+        core.pc = 0xfff0;
+        core.inst_c_jal(&inst_c_jal_code(0xffe));
+        assert_eq!(0xfff2, core.regs.read(1));
+        assert_eq!(0xfff0 + 0xffe, core.pc);
     }
 
     #[test]

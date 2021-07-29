@@ -23,7 +23,7 @@ lw         | 11             | :heavy_check_mark:
 c.mv       | 10             | :heavy_check_mark:
 ret        | 10             | 
 c.beqz     | 9              | 
-c.jal      | 6              | 
+c.jal      | 6              | :heavy_check_mark:
 c.bnez     | 6              | 
 c.add      | 6              | 
 c.sw       | 6              | 
