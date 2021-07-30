@@ -45,12 +45,18 @@ impl<'a> RVCore<'a> {
         let inst_bytes = RVCore::byte_array_to_addr_type(&data);
 
         let inst = self.id_instance.decode(inst_bytes);
-        println!("{:#010x} ({:#010x}) {}", self.pc, inst_bytes,
+        if inst.id == InstID::INVALID {
+            println!("{:#010x} ({:#010x}) INVALID", self.pc, inst_bytes as u32);
+            panic!("Invalid instruction");
+        }
+
+        println!("{:#010x} ({:#010x}) {}", self.pc, inst_bytes as u32,
                     inst_info::inst_info_table[inst.id as usize].name);
 
         self.execute(&inst);
         match inst.id {
             InstID::C_JAL => {}
+            InstID::JAL => {}
             _ => self.pc += inst.len,
         }
     }
@@ -66,9 +72,11 @@ impl<'a> RVCore<'a> {
             InstID::C_LI => self.inst_c_li(inst),
             InstID::C_MV => self.inst_c_mv(inst),
             InstID::C_SUB => self.inst_c_sub(inst),
+            InstID::JAL => self.inst_jal(inst),
             InstID::LW => self.inst_lw(inst),
             InstID::SB => self.inst_sb(inst),
             InstID::NOP => self.inst_nop(inst),
+            InstID::INVALID => panic!("Execute: invalid instruction"),
         }
     }
 
@@ -168,6 +176,15 @@ impl<'a> RVCore<'a> {
         let a = self.regs.read(inst.get_rd_3b());
         let b = self.regs.read(inst.get_rs2_3b());
         self.regs.write(inst.get_rd_3b(), a.wrapping_sub(b));
+    }
+
+    fn inst_jal(&mut self, inst: &inst_type::InstType) {
+        self.regs.write(inst.get_rd(), self.pc + 4);
+        let imm = inst.get_imm_jtype();
+        self.pc += (((imm >> 19) & 1) << 20)
+                    | (((imm >> 9) & 0x3ff) << 1)
+                    | (((imm >> 8) & 0x1) << 11)
+                    | (((imm >> 0) & 0xff) << 12);
     }
 
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
@@ -287,6 +304,15 @@ mod tests {
         core.regs.write(9, 0xf0f00f0f);
         core.inst_c_sub(&inst_c_sub_code(8, 9));
         assert_eq!(0x0f0ff0f0, core.regs.read(8));
+    }
+
+    #[test]
+    fn test_inst_jal() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(8, 0xffffffff);
+        core.inst_jal(&inst_jal_code(8, 0xff00));
+        assert_eq!(4, core.regs.read(8));
+        assert_eq!(0xff00, core.pc);
     }
 
     #[test]

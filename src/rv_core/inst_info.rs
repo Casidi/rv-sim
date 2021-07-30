@@ -10,9 +10,11 @@ pub enum InstID {
     C_LI,
     C_MV,
     C_SUB,
+    JAL,
     LW,
     SB,
     NOP,
+    INVALID,
 }
 
 pub struct InstInfo<'a> {
@@ -23,14 +25,16 @@ pub struct InstInfo<'a> {
 pub const inst_info_table: &[InstInfo] = &[
     InstInfo { name: "auipc" },
     InstInfo { name: "addi" },
-    InstInfo { name: "c_addi" },
-    InstInfo { name: "c_jal" },
-    InstInfo { name: "c_swsp" },
-    InstInfo { name: "c_lwsp" },
-    InstInfo { name: "c_li" },
-    InstInfo { name: "c_mv" },
-    InstInfo { name: "c_sub" },
+    InstInfo { name: "c.addi" },
+    InstInfo { name: "c.jal" },
+    InstInfo { name: "c.swsp" },
+    InstInfo { name: "c.lwsp" },
+    InstInfo { name: "c.li" },
+    InstInfo { name: "c.mv" },
+    InstInfo { name: "c.sub" },
+    InstInfo { name: "jal" },
     InstInfo { name: "lw" },
     InstInfo { name: "sb" },
     InstInfo { name: "nop" },
+    InstInfo { name: "invalid" },
 ];

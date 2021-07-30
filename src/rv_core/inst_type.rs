@@ -36,6 +36,10 @@ impl InstType {
         self.data >> 20
     }
 
+    pub fn get_imm_jtype(&self) -> AddressType {
+        (self.data >> 12) & 0xfffff
+    }
+
     pub fn get_imm_utype(&self) -> AddressType {
         self.data & 0xfffff000
     }
@@ -145,6 +149,19 @@ pub mod tests {
             data: ((rd & 0x7) << 7) | ((rs2 & 0x7) << 2) | 0x1 | (0x8 << 12),
             len: 2,
             id: InstID::C_SUB,
+        }
+    }
+
+    pub fn inst_jal_code(rd: AddressType, imm: AddressType) -> InstType {
+        InstType {
+            data: ((rd & 0x1f) << 7)
+                    | (((imm >> 20) & 1) << 31)
+                    | (((imm >> 1) & 0x3ff) << 21)
+                    | (((imm >> 11) & 1) << 20)
+                    | (((imm >> 12) & 0xff) << 12)
+                    | 0b1101111,
+            len: 4,
+            id: InstID::JAL,
         }
     }
 
