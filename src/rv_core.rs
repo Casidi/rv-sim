@@ -20,6 +20,44 @@ impl XRegisters {
             self.reg_bank[i] = val;
         }
     }
+
+	fn name(i: usize) -> &'static str {
+		match i {
+			0 => "zero",
+			1 => "ra",
+			2 => "sp",
+			3 => "gp",
+			4 => "tp",
+			5 => "t0",
+			6 => "t1",
+			7 => "t2",
+			8 => "s0",
+			9 => "s1",
+			10 => "a0",
+			11 => "a1",
+			12 => "a2",
+			13 => "a3",
+			14 => "a4",
+			15 => "a5",
+			16 => "a6",
+			17 => "a7",
+			18 => "s2",
+			19 => "s3",
+			20 => "s4",
+			21 => "s5",
+			22 => "s6",
+			23 => "s7",
+			24 => "s8",
+			25 => "s9",
+			26 => "s10",
+			27 => "s11",
+			28 => "t3",
+			29 => "t4",
+			30 => "t5",
+			31 => "t6",
+			_ => "invalid gpr name"
+		}
+	}
 }
 
 pub struct RVCore<'a> {
@@ -50,10 +88,11 @@ impl<'a> RVCore<'a> {
             panic!("Invalid instruction");
         }
 
-        println!("{:#010x} ({:#010x}) {}", self.pc, inst_bytes as u32,
+        print!("{:#010x} ({:#010x}) {}", self.pc, inst_bytes as u32,
                     inst_info::inst_info_table[inst.id as usize].name);
 
         self.execute(&inst);
+		println!("");
         match inst.id {
             InstID::C_JAL => {}
             InstID::JAL => {}
@@ -65,6 +104,7 @@ impl<'a> RVCore<'a> {
         match inst.id {
             InstID::AUIPC => self.inst_auipc(inst),
             InstID::ADDI => self.inst_addi(inst),
+            InstID::BGEU => self.inst_bgeu(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_JAL => self.inst_c_jal(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
@@ -130,6 +170,20 @@ impl<'a> RVCore<'a> {
             self.regs.read(inst.get_rs1()) + inst.get_imm_itype());
     }
 
+    fn inst_bgeu(&mut self, inst: &inst_type::InstType) {
+		let imm = inst.get_imm_btype();
+		let offset = (((imm >> 11) & 1) << 12)
+						| (((imm >> 5) & 0x3f) << 5)
+						| (((imm >> 1) & 0xf) << 1)
+						| (((imm >> 0) & 1) << 11);
+		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()), XRegisters::name(inst.get_rs2_btype()), self.pc + offset);
+		if self.regs.read(inst.get_rs1()) >= self.regs.read(inst.get_rs2_btype()) {
+			self.pc += offset;
+		} else {
+			self.pc += 4;
+		}
+    }
+
     fn inst_c_addi(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(),
             self.regs.read(inst.get_rd()) + inst.get_imm_ci());
@@ -185,6 +239,7 @@ impl<'a> RVCore<'a> {
                     | (((imm >> 9) & 0x3ff) << 1)
                     | (((imm >> 8) & 0x1) << 11)
                     | (((imm >> 0) & 0xff) << 12);
+		print!(" {},{:x}", XRegisters::name(inst.get_rd()), self.pc);
     }
 
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
@@ -235,6 +290,21 @@ mod tests {
         core.regs.write(2, 0x1234);
         core.inst_addi(&inst_addi_code(1, 2, 0x7ff));
         assert_eq!(0x7ff + 0x1234, core.regs.read(1));
+    }
+
+    #[test]
+    fn test_inst_bgeu() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x1234);
+        core.regs.write(3, 0x1234);
+        core.inst_bgeu(&inst_bgeu_code(2, 3, 0xffe));
+        assert_eq!(0xffe, core.pc);
+
+		core.pc = 0;
+        core.regs.write(2, 0x1230);
+        core.regs.write(3, 0x1234);
+        core.inst_bgeu(&inst_bgeu_code(2, 3, 0xffe));
+        assert_eq!(0x4, core.pc);
     }
 
     #[test]

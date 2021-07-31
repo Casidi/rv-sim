@@ -23,7 +23,7 @@ fn main() {
     core.bind_mem(&mut mem);
 
     core.pc = entry;
-    core.run(10);
+    core.run(100);
 }
 
 fn load_elf(mem: &mut memory_model::MemoryModel, path: &str) -> AddressType {

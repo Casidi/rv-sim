@@ -32,6 +32,10 @@ impl InstType {
         ((self.data >> 20) & 0x1f) as usize
     }
 
+    pub fn get_rs2_btype(&self) -> usize {
+        ((self.data >> 20) & 0x1f) as usize
+    }
+
     pub fn get_imm_itype(&self) -> AddressType {
         self.data >> 20
     }
@@ -42,6 +46,11 @@ impl InstType {
 
     pub fn get_imm_utype(&self) -> AddressType {
         self.data & 0xfffff000
+    }
+
+    pub fn get_imm_btype(&self) -> AddressType {
+        (((self.data >> 25) & 0x7f) << 5)
+			| ((self.data >> 7) & 0x1f)
     }
 
     pub fn get_imm_stype(&self) -> AddressType {
@@ -80,6 +89,19 @@ pub mod tests {
             data: (imm << 20) | (rs1 << 15) | (rd << 7) | 0x13,
             len: 4,
             id: InstID::ADDI,
+        }
+    }
+
+    pub fn inst_bgeu_code(rs1: AddressType, rs2: AddressType, imm: AddressType) -> InstType {
+        InstType {
+            data: (rs1 << 15) | (rs2 << 20) | 0x63 | (0x7 << 12)
+					| (((imm >> 12) & 1) << 31)
+					| (((imm >> 5) & 0x3f) << 25)
+					| (((imm >> 1) & 0xf) << 8)
+					| (((imm >> 11) & 1) << 7)
+					,
+            len: 4,
+            id: InstID::BGEU,
         }
     }
 

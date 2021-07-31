@@ -41,7 +41,7 @@ c.addi16sp |        4 |
 c.sub      |        3 | :heavy_check_mark:
 bltu       |        3 |
 srai       |        3 |
-bgeu       |        2 |
+bgeu       |        2 | :heavy_check_mark:
 andi       |        2 |
 c.slli     |        2 |
 sub        |        2 |

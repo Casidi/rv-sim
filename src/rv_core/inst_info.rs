@@ -3,6 +3,7 @@
 pub enum InstID {
     AUIPC,
     ADDI,
+    BGEU,
     C_ADDI,
     C_JAL,
     C_SWSP,
@@ -25,6 +26,7 @@ pub struct InstInfo<'a> {
 pub const inst_info_table: &[InstInfo] = &[
     InstInfo { name: "auipc" },
     InstInfo { name: "addi" },
+    InstInfo { name: "bgeu" },
     InstInfo { name: "c.addi" },
     InstInfo { name: "c.jal" },
     InstInfo { name: "c.swsp" },
