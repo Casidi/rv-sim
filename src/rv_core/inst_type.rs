@@ -20,6 +20,10 @@ impl InstType {
         (((self.data >> 15) & 0x1f)) as usize
     }
 
+    pub fn get_rs1_3b(&self) -> usize {
+        ((((self.data >> 7) & 0x7)) + 8) as usize
+    }
+
     pub fn get_rs2(&self) -> usize {
         ((self.data >> 2) & 0x1f) as usize
     }
@@ -64,6 +68,11 @@ impl InstType {
     pub fn get_imm_cj(&self) -> AddressType {
         (self.data >> 2) & 0x7ff
     }
+
+    pub fn get_imm_cb(&self) -> AddressType {
+        (((self.data >> 10) & 0x7) << 5)
+			| ((self.data >> 2) & 0x1f)
+	}
 
     pub fn get_imm_css(&self) -> AddressType {
         (self.data >> 7) & 0x3f
@@ -118,6 +127,19 @@ pub mod tests {
             data: (((imm >> 5) & 1) << 12) | (rd << 7) | ((imm & 0x1f) << 2) | 0x1,
             len: 2,
             id: InstID::C_ADDI,
+        }
+    }
+
+    pub fn inst_c_bnez_code(rs1: AddressType, offset: AddressType) -> InstType {
+        InstType {
+            data: ((rs1 - 8) << 7) | 0x1 | (0x7 << 13)
+					| (((offset >> 8) & 1) << 12)
+					| (((offset >> 3) & 3) << 10)
+					| (((offset >> 6) & 3) << 5)
+					| (((offset >> 1) & 3) << 3)
+					| (((offset >> 5) & 1) << 2),
+            len: 2,
+            id: InstID::C_BNEZ,
         }
     }
 

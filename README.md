@@ -24,7 +24,7 @@ sb         |        9 | :heavy_check_mark:
 c.beqz     |        9 |
 c.sd       |        7 |
 jal        |        6 | :heavy_check_mark:
-c.bnez     |        6 |
+c.bnez     |        6 | :heavy_check_mark:
 c.add      |        6 |
 ld         |        6 |
 c.lui      |        6 |
