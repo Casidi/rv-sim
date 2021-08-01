@@ -86,9 +86,17 @@ pub mod tests {
 
     pub fn inst_addi_code(rd: AddressType, rs1: AddressType, imm: AddressType) -> InstType {
         InstType {
-            data: (imm << 20) | (rs1 << 15) | (rd << 7) | 0x13,
+            data: (imm << 20) | (rs1 << 15) | (rd << 7) | 0x13 | (0x0 << 12),
             len: 4,
             id: InstID::ADDI,
+        }
+    }
+
+    pub fn inst_andi_code(rd: AddressType, rs1: AddressType, imm: AddressType) -> InstType {
+        InstType {
+            data: (imm << 20) | (rs1 << 15) | (rd << 7) | 0x13 | (0x7 << 12),
+            len: 4,
+            id: InstID::ANDI,
         }
     }
 

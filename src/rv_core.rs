@@ -96,6 +96,7 @@ impl<'a> RVCore<'a> {
         match inst.id {
             InstID::C_JAL => {}
             InstID::JAL => {}
+            InstID::BGEU => {}
             _ => self.pc += inst.len,
         }
     }
@@ -104,6 +105,7 @@ impl<'a> RVCore<'a> {
         match inst.id {
             InstID::AUIPC => self.inst_auipc(inst),
             InstID::ADDI => self.inst_addi(inst),
+            InstID::ANDI => self.inst_andi(inst),
             InstID::BGEU => self.inst_bgeu(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_JAL => self.inst_c_jal(inst),
@@ -168,6 +170,11 @@ impl<'a> RVCore<'a> {
     fn inst_addi(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(),
             self.regs.read(inst.get_rs1()) + inst.get_imm_itype());
+    }
+
+    fn inst_andi(&mut self, inst: &inst_type::InstType) {
+        self.regs.write(inst.get_rd(),
+            self.regs.read(inst.get_rs1()) & inst.get_imm_itype());
     }
 
     fn inst_bgeu(&mut self, inst: &inst_type::InstType) {
@@ -290,6 +297,14 @@ mod tests {
         core.regs.write(2, 0x1234);
         core.inst_addi(&inst_addi_code(1, 2, 0x7ff));
         assert_eq!(0x7ff + 0x1234, core.regs.read(1));
+    }
+
+    #[test]
+    fn test_inst_andi() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x1234);
+        core.inst_andi(&inst_andi_code(1, 2, 0x7ff));
+        assert_eq!(0x7ff & 0x1234, core.regs.read(1));
     }
 
     #[test]

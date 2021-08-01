@@ -42,7 +42,7 @@ c.sub      |        3 | :heavy_check_mark:
 bltu       |        3 |
 srai       |        3 |
 bgeu       |        2 | :heavy_check_mark:
-andi       |        2 |
+andi       |        2 | :heavy_check_mark:
 c.slli     |        2 |
 sub        |        2 |
 c.addi4spn |        2 |
