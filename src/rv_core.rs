@@ -97,6 +97,7 @@ impl<'a> RVCore<'a> {
             InstID::C_JAL => {}
             InstID::C_BNEZ => {}
             InstID::JAL => {}
+            InstID::JALR => {}
             InstID::BGEU => {}
             _ => self.pc += inst.len,
         }
@@ -118,6 +119,7 @@ impl<'a> RVCore<'a> {
             InstID::C_MV => self.inst_c_mv(inst),
             InstID::C_SUB => self.inst_c_sub(inst),
             InstID::JAL => self.inst_jal(inst),
+            InstID::JALR => self.inst_jalr(inst),
             InstID::LW => self.inst_lw(inst),
             InstID::SB => self.inst_sb(inst),
             InstID::SLLI => self.inst_slli(inst),
@@ -273,6 +275,19 @@ impl<'a> RVCore<'a> {
                     | (((imm >> 8) & 0x1) << 11)
                     | (((imm >> 0) & 0xff) << 12);
 		print!(" {},{:x}", XRegisters::name(inst.get_rd()), self.pc);
+    }
+
+	fn sign_extend(mut input: AddressType, input_bit_len: usize) -> AddressType {
+		let mask = 1 << (input_bit_len - 1);
+		input &= (1 << input_bit_len) - 1;
+		(input ^ mask).wrapping_sub(mask)
+	}
+
+    fn inst_jalr(&mut self, inst: &inst_type::InstType) {
+        self.regs.write(inst.get_rd(), self.pc + 4);
+		let offset = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        self.pc = (self.regs.read(inst.get_rs1()).wrapping_add(offset)) & !1u64;
+		print!(" {},{:x}({})", XRegisters::name(inst.get_rd()), self.pc, XRegisters::name(inst.get_rs1()));
     }
 
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
@@ -464,6 +479,16 @@ mod tests {
         core.inst_jal(&inst_jal_code(8, 0xff00));
         assert_eq!(4, core.regs.read(8));
         assert_eq!(0xff00, core.pc);
+    }
+
+    #[test]
+    fn test_inst_jalr() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(8, 0xffffffff);
+        core.regs.write(9, 0x66);
+        core.inst_jalr(&inst_jalr_code(8, 9, 0xfff));
+        assert_eq!(4, core.regs.read(8));
+        assert_eq!(0x66 - 2, core.pc);
     }
 
     #[test]

@@ -48,7 +48,7 @@ sub        |        2 |
 c.addi4spn |        2 |
 beq        |        2 |
 slli       |        1 | :heavy_check_mark:
-jalr       |        1 |
+jalr       |        1 | :heavy_check_mark:
 c.andi     |        1 |
 sd         |        1 |
 c.lw       |        1 |

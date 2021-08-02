@@ -87,6 +87,7 @@ impl InstDecoder {
                 _ => self.dump_invalid_inst(inst),
             }
             0x63 => inst.id = InstID::BGEU,
+            0x67 => inst.id = InstID::JALR,
             0x6f => inst.id = InstID::JAL,
             _ => self.dump_invalid_inst(inst),
         }
