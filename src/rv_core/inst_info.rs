@@ -16,6 +16,9 @@ pub enum InstID {
     JAL,
     LW,
     SB,
+    SLLI,
+    SRLI,
+    SRAI,
     NOP,
     INVALID,
 }
@@ -41,6 +44,9 @@ pub const inst_info_table: &[InstInfo] = &[
     InstInfo { name: "jal" },
     InstInfo { name: "lw" },
     InstInfo { name: "sb" },
+    InstInfo { name: "slli" },
+    InstInfo { name: "srli" },
+    InstInfo { name: "srai" },
     InstInfo { name: "nop" },
     InstInfo { name: "invalid" },
 ];

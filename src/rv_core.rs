@@ -95,6 +95,7 @@ impl<'a> RVCore<'a> {
 		println!("");
         match inst.id {
             InstID::C_JAL => {}
+            InstID::C_BNEZ => {}
             InstID::JAL => {}
             InstID::BGEU => {}
             _ => self.pc += inst.len,
@@ -118,6 +119,9 @@ impl<'a> RVCore<'a> {
             InstID::JAL => self.inst_jal(inst),
             InstID::LW => self.inst_lw(inst),
             InstID::SB => self.inst_sb(inst),
+            InstID::SLLI => self.inst_slli(inst),
+            InstID::SRLI => self.inst_srli(inst),
+            InstID::SRAI => self.inst_srai(inst),
             InstID::NOP => self.inst_nop(inst),
             InstID::INVALID => panic!("Execute: invalid instruction"),
         }
@@ -200,7 +204,6 @@ impl<'a> RVCore<'a> {
     fn inst_c_bnez(&mut self, inst: &inst_type::InstType) {
 		let rs1_val = self.regs.read(inst.get_rs1_3b());
 		let imm = inst.get_imm_cb();
-		println!("Debug: {:#x}", imm);
 		let offset = (((imm >> 7) & 0x1) << 8)
 						| (((imm >> 5) & 0x3) << 3)
 						| (((imm >> 3) & 0x3) << 6)
@@ -280,6 +283,24 @@ impl<'a> RVCore<'a> {
         let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
         let data = self.regs.read(inst.get_rs2_stype());
         self.write_memory(address, &data.to_le_bytes()[..1]);
+    }
+
+    fn inst_slli(&mut self, inst: &inst_type::InstType) {
+        let shamt = inst.get_shamt_itype();
+		let rs1_val = self.regs.read(inst.get_rs1());
+        self.regs.write(inst.get_rd(), rs1_val << shamt);
+    }
+
+    fn inst_srli(&mut self, inst: &inst_type::InstType) {
+        let shamt = inst.get_shamt_itype();
+		let rs1_val = self.regs.read(inst.get_rs1());
+        self.regs.write(inst.get_rd(), rs1_val >> shamt);
+    }
+
+    fn inst_srai(&mut self, inst: &inst_type::InstType) {
+        let shamt = inst.get_shamt_itype();
+		let rs1_val = self.regs.read(inst.get_rs1());
+        self.regs.write(inst.get_rd(), ((rs1_val as i64) >> shamt) as AddressType);
     }
 }
 
@@ -455,5 +476,35 @@ mod tests {
         assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
         assert_eq!(0x8888 + 0xff, mem_stub.buffer.addr);
         assert_eq!([0x78].to_vec(), mem_stub.buffer.data);
+    }
+
+    #[test]
+    fn test_inst_slli() {
+        let mut core: RVCore = RVCore::new();
+
+        core.regs.write(1, 0x0); // rd
+        core.regs.write(2, 0xff); // rs1
+        core.inst_slli(&inst_slli_code(1, 2, 0x10));
+		assert_eq!(0xff << 16, core.regs.read(1));
+    }
+
+    #[test]
+    fn test_inst_srli() {
+        let mut core: RVCore = RVCore::new();
+
+        core.regs.write(1, 0x0); // rd
+        core.regs.write(2, 0xff0000); // rs1
+        core.inst_srli(&inst_srli_code(1, 2, 0x10));
+		assert_eq!(0xff, core.regs.read(1));
+    }
+
+    #[test]
+    fn test_inst_srai() {
+        let mut core: RVCore = RVCore::new();
+
+        core.regs.write(1, 0x0); // rd
+        core.regs.write(2, AddressType::MAX); // rs1
+        core.inst_srai(&inst_srai_code(1, 2, 0x10));
+		assert_eq!(AddressType::MAX, core.regs.read(1));
     }
 }

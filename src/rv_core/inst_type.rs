@@ -40,6 +40,10 @@ impl InstType {
         ((self.data >> 20) & 0x1f) as usize
     }
 
+    pub fn get_shamt_itype(&self) -> AddressType {
+        (self.data >> 20) & 0x1f
+    }
+
     pub fn get_imm_itype(&self) -> AddressType {
         self.data >> 20
     }
@@ -236,6 +240,30 @@ pub mod tests {
                     | 0x23,
             len: 4,
             id: InstID::SB,
+        }
+    }
+
+    pub fn inst_slli_code(rd: AddressType, rs1: AddressType, shamt: AddressType) -> InstType {
+        InstType {
+            data: (shamt << 20) | (rs1 << 15) | (rd << 7) | 0x13 | (0x0 << 25) | (1 << 12),
+            len: 4,
+            id: InstID::SLLI,
+        }
+    }
+
+    pub fn inst_srli_code(rd: AddressType, rs1: AddressType, shamt: AddressType) -> InstType {
+        InstType {
+            data: (shamt << 20) | (rs1 << 15) | (rd << 7) | 0x13 | (0x0 << 25) | (0b101 << 12),
+            len: 4,
+            id: InstID::SRLI,
+        }
+    }
+
+    pub fn inst_srai_code(rd: AddressType, rs1: AddressType, shamt: AddressType) -> InstType {
+        InstType {
+            data: (shamt << 20) | (rs1 << 15) | (rd << 7) | 0x13 | (0x20 << 25) | (0b101 << 12),
+            len: 4,
+            id: InstID::SRAI,
         }
     }
 }
