@@ -108,6 +108,7 @@ impl<'a> RVCore<'a> {
             InstID::ADDI => self.inst_addi(inst),
             InstID::ANDI => self.inst_andi(inst),
             InstID::BGEU => self.inst_bgeu(inst),
+            InstID::C_ADD => self.inst_c_add(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_BNEZ => self.inst_c_bnez(inst),
             InstID::C_JAL => self.inst_c_jal(inst),
@@ -194,6 +195,10 @@ impl<'a> RVCore<'a> {
 		} else {
 			self.pc += 4;
 		}
+    }
+
+    fn inst_c_add(&mut self, inst: &inst_type::InstType) {
+        self.regs.write(inst.get_rd(), self.regs.read(inst.get_rd()) + self.regs.read(inst.get_rs2()));
     }
 
     fn inst_c_addi(&mut self, inst: &inst_type::InstType) {
@@ -359,6 +364,15 @@ mod tests {
         core.regs.write(3, 0x1234);
         core.inst_bgeu(&inst_bgeu_code(2, 3, 0xffe));
         assert_eq!(0x4, core.pc);
+    }
+
+    #[test]
+    fn test_inst_c_add() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0xff);
+        core.regs.write(3, 0xfafafafa);
+        core.inst_c_add(&inst_c_add_code(2, 3));
+        assert_eq!(0xfafafafa + 0xff, core.regs.read(2));
     }
 
     #[test]

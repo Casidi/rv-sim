@@ -126,6 +126,14 @@ pub mod tests {
         }
     }
 
+    pub fn inst_c_add_code(rd: AddressType, rs2: AddressType) -> InstType {
+        InstType {
+            data: (rd << 7) | (rs2 << 2) | 0x2 | (0x9 << 12),
+            len: 2,
+            id: InstID::C_ADD,
+        }
+    }
+
     pub fn inst_c_addi_code(rd: AddressType, imm: AddressType) -> InstType {
         InstType {
             data: (((imm >> 5) & 1) << 12) | (rd << 7) | ((imm & 0x1f) << 2) | 0x1,

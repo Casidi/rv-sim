@@ -25,7 +25,7 @@ c.beqz     |        9 |
 c.sd       |        7 |
 jal        |        6 | :heavy_check_mark:
 c.bnez     |        6 | :heavy_check_mark:
-c.add      |        6 |
+c.add      |        6 | :heavy_check_mark:
 ld         |        6 |
 c.lui      |        6 |
 c.j        |        5 |
