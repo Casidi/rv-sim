@@ -95,6 +95,7 @@ impl<'a> RVCore<'a> {
 		println!("");
         match inst.id {
             InstID::C_JAL => {}
+            InstID::C_JR => {}
             InstID::C_BNEZ => {}
             InstID::JAL => {}
             InstID::JALR => {}
@@ -113,6 +114,7 @@ impl<'a> RVCore<'a> {
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_BNEZ => self.inst_c_bnez(inst),
             InstID::C_JAL => self.inst_c_jal(inst),
+            InstID::C_JR => self.inst_c_jr(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
             InstID::C_LI => self.inst_c_li(inst),
@@ -236,6 +238,11 @@ impl<'a> RVCore<'a> {
         offset |= ((imm >> 1) & 7) << 1;
         offset |= ((imm >> 0) & 1) << 5;
         self.pc += offset;
+    }
+
+    fn inst_c_jr(&mut self, inst: &inst_type::InstType) {
+		print!(" {}", XRegisters::name(inst.get_rs1_cr()));
+		self.pc = self.regs.read(inst.get_rs1_cr());
     }
 
     fn inst_c_swsp(&mut self, inst: &inst_type::InstType) {
@@ -418,6 +425,15 @@ mod tests {
         core.inst_c_jal(&inst_c_jal_code(0xffe));
         assert_eq!(0xfff2, core.regs.read(1));
         assert_eq!(0xfff0 + 0xffe, core.pc);
+    }
+
+    #[test]
+    fn test_inst_c_jr() {
+        let mut core: RVCore = RVCore::new();
+        core.pc = 0x0;
+		core.regs.write(8, 0x6666);
+        core.inst_c_jr(&inst_c_jr_code(8));
+        assert_eq!(0x6666, core.pc);
     }
 
     #[test]

@@ -18,7 +18,7 @@ c.ldsp     |       20 |
 c.addi     |       19 | :heavy_check_mark:
 addi       |       14 | :heavy_check_mark:
 c.li       |       14 | :heavy_check_mark:
-ret        |       10 |
+ret(c.jr)  |       10 | :heavy_check_mark:
 c.mv       |        9 | :heavy_check_mark:
 sb         |        9 | :heavy_check_mark:
 c.beqz     |        9 |
@@ -64,3 +64,4 @@ lbu        |        1 |
 ecall      |        1 |
 c.swsp     |          | :heavy_check_mark:
 c.jal      |          | :heavy_check_mark:
+srli       |          | :heavy_check_mark:

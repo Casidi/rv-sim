@@ -24,6 +24,10 @@ impl InstType {
         ((((self.data >> 7) & 0x7)) + 8) as usize
     }
 
+    pub fn get_rs1_cr(&self) -> usize {
+        (((self.data >> 7) & 0x1f)) as usize
+    }
+
     pub fn get_rs2(&self) -> usize {
         ((self.data >> 2) & 0x1f) as usize
     }
@@ -168,6 +172,14 @@ pub mod tests {
                         | (((imm >> 5) & 1) << 2),
             len: 2,
             id: InstID::C_JAL,
+        }
+    }
+
+    pub fn inst_c_jr_code(rs1: AddressType) -> InstType {
+        InstType {
+            data: 0x2 | (0b100 << 13) | (rs1 << 7),
+            len: 2,
+            id: InstID::C_JR,
         }
     }
 
