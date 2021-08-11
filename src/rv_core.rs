@@ -100,6 +100,7 @@ impl<'a> RVCore<'a> {
             InstID::C_BNEZ => {}
             InstID::JAL => {}
             InstID::JALR => {}
+            InstID::BLTU => {}
             InstID::BGEU => {}
             _ => self.pc += inst.len,
         }
@@ -110,6 +111,7 @@ impl<'a> RVCore<'a> {
             InstID::AUIPC => self.inst_auipc(inst),
             InstID::ADDI => self.inst_addi(inst),
             InstID::ANDI => self.inst_andi(inst),
+            InstID::BLTU => self.inst_bltu(inst),
             InstID::BGEU => self.inst_bgeu(inst),
             InstID::C_ADD => self.inst_c_add(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
@@ -195,15 +197,33 @@ impl<'a> RVCore<'a> {
             self.regs.read(inst.get_rs1()) & inst.get_imm_itype());
     }
 
+    fn inst_bltu(&mut self, inst: &inst_type::InstType) {
+		let imm = inst.get_imm_btype();
+		let offset = (((imm >> 11) & 1) << 12)
+						| (((imm >> 5) & 0x3f) << 5)
+						| (((imm >> 1) & 0xf) << 1)
+						| (((imm >> 0) & 1) << 11);
+	    let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
+		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+                XRegisters::name(inst.get_rs2_btype()), new_pc);
+		if self.regs.read(inst.get_rs1()) < self.regs.read(inst.get_rs2_btype()) {
+			self.pc = new_pc;
+		} else {
+			self.pc += 4;
+		}
+    }
+
     fn inst_bgeu(&mut self, inst: &inst_type::InstType) {
 		let imm = inst.get_imm_btype();
 		let offset = (((imm >> 11) & 1) << 12)
 						| (((imm >> 5) & 0x3f) << 5)
 						| (((imm >> 1) & 0xf) << 1)
 						| (((imm >> 0) & 1) << 11);
-		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()), XRegisters::name(inst.get_rs2_btype()), self.pc + offset);
+	    let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
+		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+                XRegisters::name(inst.get_rs2_btype()), new_pc);
 		if self.regs.read(inst.get_rs1()) >= self.regs.read(inst.get_rs2_btype()) {
-			self.pc += offset;
+			self.pc = new_pc;
 		} else {
 			self.pc += 4;
 		}
@@ -415,13 +435,13 @@ mod tests {
         let mut core: RVCore = RVCore::new();
         core.regs.write(2, 0x1234);
         core.regs.write(3, 0x1234);
-        core.inst_bgeu(&inst_bgeu_code(2, 3, 0xffe));
-        assert_eq!(0xffe, core.pc);
+        core.inst_bgeu(&inst_bgeu_code(2, 3, 0x7fe));
+        assert_eq!(0x7fe, core.pc);
 
 		core.pc = 0;
         core.regs.write(2, 0x1230);
         core.regs.write(3, 0x1234);
-        core.inst_bgeu(&inst_bgeu_code(2, 3, 0xffe));
+        core.inst_bgeu(&inst_bgeu_code(2, 3, 0x7fe));
         assert_eq!(0x4, core.pc);
     }
 

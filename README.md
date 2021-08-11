@@ -39,7 +39,7 @@ li         |        4 |
 bne        |        4 |
 c.addi16sp |        4 |
 c.sub      |        3 | :heavy_check_mark:
-bltu       |        3 |
+bltu       |        3 | :heavy_check_mark:
 srai       |        3 | :heavy_check_mark:
 bgeu       |        2 | :heavy_check_mark:
 andi       |        2 | :heavy_check_mark:

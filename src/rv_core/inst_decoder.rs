@@ -100,7 +100,7 @@ impl InstDecoder {
                 _ => self.dump_invalid_inst(inst),
             }
             0x63 => match funct3 {
-                //0x6 => inst.id = InstID::BLTU,
+                0x6 => inst.id = InstID::BLTU,
                 0x7 => inst.id = InstID::BGEU,
                 _ => self.dump_invalid_inst(inst),
             }
