@@ -49,7 +49,7 @@ c.addi4spn |        2 |
 beq        |        2 |
 slli       |        1 | :heavy_check_mark:
 jalr       |        1 | :heavy_check_mark:
-c.andi     |        1 |
+c.andi     |        1 | :heavy_check_mark:
 sd         |        1 |
 c.lw       |        1 |
 blt        |        1 |

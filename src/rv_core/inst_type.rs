@@ -146,6 +146,15 @@ pub mod tests {
         }
     }
 
+    pub fn inst_c_andi_code(rd: AddressType, imm: AddressType) -> InstType {
+        InstType {
+            data: (((rd-8) & 0x7) << 7) | ((imm & 0x1f) << 2) | ((imm >> 5) << 12)
+                    | 0x1 | (4 << 13) | (0b10 << 10),
+            len: 2,
+            id: InstID::C_ANDI,
+        }
+    }
+
     pub fn inst_c_bnez_code(rs1: AddressType, offset: AddressType) -> InstType {
         InstType {
             data: ((rs1 - 8) << 7) | 0x1 | (0x7 << 13)

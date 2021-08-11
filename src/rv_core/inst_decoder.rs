@@ -36,9 +36,16 @@ impl InstDecoder {
                 0x1 => inst.id = InstID::C_JAL,
                 0x2 => inst.id = InstID::C_LI,
                 0x4 => {
-                    match ((inst_bytes >> 12) & 1, (inst_bytes >> 5) & 0b11) {
-                        (0, 0) => inst.id = InstID::C_SUB,
-                        (_, _) => self.dump_invalid_inst(inst),
+                    let funct2 = (inst_bytes >> 10) & 3;
+                    match funct2 {
+                        0x2 => inst.id = InstID::C_ANDI,
+                        0x3 =>  {
+                            match ((inst_bytes >> 12) & 1, (inst_bytes >> 5) & 0b11) {
+                                (0, 0) => inst.id = InstID::C_SUB,
+                                (_, _) => self.dump_invalid_inst(inst),
+                            }
+                        }
+                        _ => self.dump_invalid_inst(inst),
                     }
                 }
                 0x5 => inst.id = InstID::C_J,
