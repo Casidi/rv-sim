@@ -53,6 +53,7 @@ impl InstDecoder {
                     }
                 }
                 0x5 => inst.id = InstID::C_J,
+                0x6 => inst.id = InstID::C_BEQZ,
                 0x7 => inst.id = InstID::C_BNEZ,
                 _ => self.dump_invalid_inst(inst),
             },

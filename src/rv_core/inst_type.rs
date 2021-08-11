@@ -160,6 +160,19 @@ pub mod tests {
         }
     }
 
+    pub fn inst_c_beqz_code(rs1: AddressType, offset: AddressType) -> InstType {
+        InstType {
+            data: ((rs1 - 8) << 7) | 0x1 | (0x6 << 13)
+					| (((offset >> 8) & 1) << 12)
+					| (((offset >> 3) & 3) << 10)
+					| (((offset >> 6) & 3) << 5)
+					| (((offset >> 1) & 3) << 3)
+					| (((offset >> 5) & 1) << 2),
+            len: 2,
+            id: InstID::C_BEQZ,
+        }
+    }
+
     pub fn inst_c_bnez_code(rs1: AddressType, offset: AddressType) -> InstType {
         InstType {
             data: ((rs1 - 8) << 7) | 0x1 | (0x7 << 13)

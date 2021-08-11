@@ -98,6 +98,7 @@ impl<'a> RVCore<'a> {
             InstID::C_JAL => {}
             InstID::C_JR => {}
             InstID::C_BNEZ => {}
+            InstID::C_BEQZ => {}
             InstID::JAL => {}
             InstID::JALR => {}
             InstID::BLTU => {}
@@ -116,6 +117,7 @@ impl<'a> RVCore<'a> {
             InstID::C_ADD => self.inst_c_add(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_ANDI => self.inst_c_andi(inst),
+            InstID::C_BEQZ => self.inst_c_beqz(inst),
             InstID::C_BNEZ => self.inst_c_bnez(inst),
             InstID::C_J => self.inst_c_j(inst),
             InstID::C_JAL => self.inst_c_jal(inst),
@@ -243,6 +245,22 @@ impl<'a> RVCore<'a> {
         let imm_cb = inst.get_imm_cb();
         let imm = RVCore::sign_extend((imm_cb & 0x1f) | (((imm_cb >> 7) & 1) << 5), 6);
         self.regs.write(inst.get_rs1_3b(), a & imm);
+    }
+
+    fn inst_c_beqz(&mut self, inst: &inst_type::InstType) {
+		let rs1_val = self.regs.read(inst.get_rs1_3b());
+		let imm = inst.get_imm_cb();
+		let offset = (((imm >> 7) & 0x1) << 8)
+						| (((imm >> 5) & 0x3) << 3)
+						| (((imm >> 3) & 0x3) << 6)
+						| (((imm >> 1) & 0x3) << 1)
+						| (((imm >> 0) & 0x1) << 5);
+		print!(" {},{:x}", XRegisters::name(inst.get_rs1_3b()), self.pc + offset);
+		if rs1_val == 0 {
+			self.pc += offset;
+		} else {
+			self.pc += 2;
+		}
     }
 
     fn inst_c_bnez(&mut self, inst: &inst_type::InstType) {
@@ -468,6 +486,19 @@ mod tests {
         core.regs.write(8, 0b111000111);
         core.inst_c_andi(&inst_c_andi_code(8, 0b111100));
         assert_eq!(0b111000100, core.regs.read(8));
+    }
+
+    #[test]
+    fn test_inst_c_beqz() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(10, 0);
+        core.inst_c_beqz(&inst_c_beqz_code(10, 0xfe));
+        assert_eq!(0xfe, core.pc);
+
+		core.pc = 0;
+        core.regs.write(10, 1);
+        core.inst_c_beqz(&inst_c_beqz_code(10, 0xfe));
+        assert_eq!(2, core.pc);
     }
 
     #[test]

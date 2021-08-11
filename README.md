@@ -21,7 +21,7 @@ c.li       |       14 | :heavy_check_mark:
 ret(c.jr)  |       10 | :heavy_check_mark:
 c.mv       |        9 | :heavy_check_mark:
 sb         |        9 | :heavy_check_mark:
-c.beqz     |        9 |
+c.beqz     |        9 | :heavy_check_mark:
 c.sd       |        7 | :heavy_check_mark:
 jal        |        6 | :heavy_check_mark:
 c.bnez     |        6 | :heavy_check_mark:
