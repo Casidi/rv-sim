@@ -94,6 +94,7 @@ impl<'a> RVCore<'a> {
         self.execute(&inst);
 		println!("");
         match inst.id {
+            InstID::C_J => {}
             InstID::C_JAL => {}
             InstID::C_JR => {}
             InstID::C_BNEZ => {}
@@ -113,6 +114,7 @@ impl<'a> RVCore<'a> {
             InstID::C_ADD => self.inst_c_add(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_BNEZ => self.inst_c_bnez(inst),
+            InstID::C_J => self.inst_c_j(inst),
             InstID::C_JAL => self.inst_c_jal(inst),
             InstID::C_JR => self.inst_c_jr(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
@@ -224,6 +226,20 @@ impl<'a> RVCore<'a> {
 		} else {
 			self.pc += 2;
 		}
+    }
+
+    fn inst_c_j(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_cj();
+        let mut offset = ((imm >> 10) & 1) << 11;
+        offset |= ((imm >> 9) & 1) << 4;
+        offset |= ((imm >> 7) & 3) << 8;
+        offset |= ((imm >> 6) & 1) << 10;
+        offset |= ((imm >> 5) & 1) << 6;
+        offset |= ((imm >> 4) & 1) << 7;
+        offset |= ((imm >> 1) & 7) << 1;
+        offset |= ((imm >> 0) & 1) << 5;
+		let offset_with_sign = RVCore::sign_extend(offset, 12);
+        self.pc = self.pc.wrapping_add(offset_with_sign);
     }
 
     fn inst_c_jal(&mut self, inst: &inst_type::InstType) {
@@ -416,6 +432,14 @@ mod tests {
         core.regs.write(10, 0);
         core.inst_c_bnez(&inst_c_bnez_code(10, 0xfe));
         assert_eq!(2, core.pc);
+    }
+
+    #[test]
+    fn test_inst_c_j() {
+        let mut core: RVCore = RVCore::new();
+        core.pc = 0xfff0;
+        core.inst_c_j(&inst_c_j_code(0xfe));
+        assert_eq!(0xfff0 + 0xfe, core.pc);
     }
 
     #[test]

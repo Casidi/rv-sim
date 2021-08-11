@@ -28,7 +28,7 @@ c.bnez     |        6 | :heavy_check_mark:
 c.add      |        6 | :heavy_check_mark:
 ld         |        6 |
 c.lui      |        6 |
-c.j        |        5 |
+c.j        |        5 | :heavy_check_mark:
 c.ld       |        5 |
 lw         |        5 | :heavy_check_mark:
 auipc      |        4 | :heavy_check_mark:
