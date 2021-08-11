@@ -22,7 +22,7 @@ ret(c.jr)  |       10 | :heavy_check_mark:
 c.mv       |        9 | :heavy_check_mark:
 sb         |        9 | :heavy_check_mark:
 c.beqz     |        9 |
-c.sd       |        7 |
+c.sd       |        7 | :heavy_check_mark:
 jal        |        6 | :heavy_check_mark:
 c.bnez     |        6 | :heavy_check_mark:
 c.add      |        6 | :heavy_check_mark:

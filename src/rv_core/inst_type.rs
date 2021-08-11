@@ -85,6 +85,11 @@ impl InstType {
     pub fn get_imm_css(&self) -> AddressType {
         (self.data >> 7) & 0x3f
     }
+
+    pub fn get_imm_cs(&self) -> AddressType {
+        (((self.data >> 10) & 0x7) << 2)
+            | ((self.data >> 5) & 0x3)
+    }
 }
 
 #[cfg(test)]
@@ -242,6 +247,17 @@ pub mod tests {
             data: (rd << 7) | (rs2 << 2) | 0x2 | (0x8 << 12),
             len: 2,
             id: InstID::C_MV,
+        }
+    }
+
+    pub fn inst_c_sd_code(rs2: AddressType, rs1: AddressType, offset: AddressType) -> InstType {
+        InstType {
+            data: (((rs1 - 8) & 0x7) << 7) | (((rs2 - 8) & 0x7) << 2)
+                    | (((offset >> 3) & 0x7) << 10)
+                    | (((offset >> 6) & 0x3) << 5)
+                    | 0x0 | (0x7 << 13),
+            len: 2,
+            id: InstID::C_SD,
         }
     }
 

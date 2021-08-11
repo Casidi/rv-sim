@@ -31,6 +31,10 @@ impl InstDecoder {
         let opcode = inst_bytes & 0x3;
         let funct3 = (inst_bytes >> 13) & 7;
         match opcode {
+            0x0 => match funct3 {
+                0x7 => inst.id = InstID::C_SD,
+                _ => self.dump_invalid_inst(inst),
+            }
             0x1 => match funct3 {
                 0x0 => inst.id = InstID::C_ADDI,
                 0x1 => inst.id = InstID::C_JAL,
@@ -95,7 +99,11 @@ impl InstDecoder {
                 0x0 => inst.id = InstID::SB,
                 _ => self.dump_invalid_inst(inst),
             }
-            0x63 => inst.id = InstID::BGEU,
+            0x63 => match funct3 {
+                //0x6 => inst.id = InstID::BLTU,
+                0x7 => inst.id = InstID::BGEU,
+                _ => self.dump_invalid_inst(inst),
+            }
             0x67 => inst.id = InstID::JALR,
             0x6f => inst.id = InstID::JAL,
             _ => self.dump_invalid_inst(inst),
