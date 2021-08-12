@@ -8,6 +8,7 @@ A RISC-V instruction-accurate simulator
 ## TODO
 - [x] Encapsulate integer registers into a struct, use read/write API to access
 - [x] Implement one RV64I instruction and reserve the flexibility for 64-bit mode (ex. ADDIW)
+- [ ] (28/49) Able to run hello world program (empty main only)
 - [ ] Pass [riscv-tests](https://github.com/riscv/riscv-tests)
 
 ## Instruction Status
@@ -32,7 +33,7 @@ c.j        |        5 | :heavy_check_mark:
 c.ld       |        5 |
 lw         |        5 | :heavy_check_mark:
 auipc      |        4 | :heavy_check_mark:
-c.addiw    |        4 |
+c.addiw    |        4 | next4
 beqz       |        4 |
 c.jalr     |        4 |
 li         |        4 |
@@ -43,16 +44,16 @@ bltu       |        3 | :heavy_check_mark:
 srai       |        3 | :heavy_check_mark:
 bgeu       |        2 | :heavy_check_mark:
 andi       |        2 | :heavy_check_mark:
-c.slli     |        2 |
+c.slli     |        2 | next3
 sub        |        2 |
 c.addi4spn |        2 |
 beq        |        2 |
 slli       |        1 | :heavy_check_mark:
 jalr       |        1 | :heavy_check_mark:
 c.andi     |        1 | :heavy_check_mark:
-sd         |        1 |
-c.lw       |        1 |
-blt        |        1 |
+sd         |        1 | :heavy_check_mark:
+c.lw       |        1 | next1
+blt        |        1 | next2
 c.sw       |        1 |
 c.lwsp     |        1 | :heavy_check_mark:
 addiw      |        1 |

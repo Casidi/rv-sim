@@ -333,9 +333,20 @@ pub mod tests {
             data: (((imm >> 5) & 0x7f) << 25) | ((imm & 0x1f) << 7)
                     | ((rs2 & 0x1f) << 20)
                     | ((rs1 & 0x1f) << 15)
-                    | 0x23,
+                    | 0x23 | (0 << 12),
             len: 4,
             id: InstID::SB,
+        }
+    }
+
+    pub fn inst_sd_code(rs2: AddressType, rs1: AddressType, imm: AddressType) -> InstType {
+        InstType {
+            data: (((imm >> 5) & 0x7f) << 25) | ((imm & 0x1f) << 7)
+                    | ((rs2 & 0x1f) << 20)
+                    | ((rs1 & 0x1f) << 15)
+                    | 0x23 | (0x3 << 12),
+            len: 4,
+            id: InstID::SD,
         }
     }
 

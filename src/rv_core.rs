@@ -379,7 +379,7 @@ impl<'a> RVCore<'a> {
         let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
         let mut data = [0; 8];
         self.read_memory(address, &mut data);
-        let mut wdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        let wdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
         self.regs.write(inst.get_rd(), wdata);
     }
 
@@ -394,12 +394,15 @@ impl<'a> RVCore<'a> {
     fn inst_sb(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_stype();
         let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
-        let data = self.regs.read(inst.get_rs2_stype());
-        self.write_memory(address, &data.to_le_bytes()[..1]);
+        let data = self.regs.read(inst.get_rs2_stype()) as u8;
+        self.write_memory(address, &data.to_le_bytes());
     }
 
     fn inst_sd(&mut self, inst: &inst_type::InstType) {
-        panic!("TODO: implement SD instruction");
+        let imm = inst.get_imm_stype();
+        let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
+        let data = self.regs.read(inst.get_rs2_stype()) as u64;
+        self.write_memory(address, &data.to_le_bytes());
     }
 
     fn inst_slli(&mut self, inst: &inst_type::InstType) {
@@ -676,6 +679,20 @@ mod tests {
         assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
         assert_eq!(0x8888 + 0xff, mem_stub.buffer.addr);
         assert_eq!([0x78].to_vec(), mem_stub.buffer.data);
+    }
+
+    #[test]
+    fn test_inst_sd() {
+        let mut core: RVCore = RVCore::new();
+        let mut mem_stub: MemoryStub = Default::default();
+        core.bind_mem(&mut mem_stub);
+
+        core.regs.write(1, 0xffffff78); // Data
+        core.regs.write(2, 0x8888); // Address
+        core.inst_sd(&inst_sd_code(1, 2, 0xff));
+        assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
+        assert_eq!(0x8888 + 0xff, mem_stub.buffer.addr);
+        assert_eq!([0x78, 0xff,0xff,0xff, 0,0,0,0].to_vec(), mem_stub.buffer.data);
     }
 
     #[test]
