@@ -7,7 +7,7 @@ A RISC-V instruction-accurate simulator
 
 ## TODO
 - [x] Encapsulate integer registers into a struct, use read/write API to access
-- [ ] Implement one RV64I instruction and reserve the flexibility for 64-bit mode (ex. ADDIW)
+- [x] Implement one RV64I instruction and reserve the flexibility for 64-bit mode (ex. ADDIW)
 - [ ] Pass [riscv-tests](https://github.com/riscv/riscv-tests)
 
 ## Instruction Status
@@ -26,7 +26,7 @@ c.sd       |        7 | :heavy_check_mark:
 jal        |        6 | :heavy_check_mark:
 c.bnez     |        6 | :heavy_check_mark:
 c.add      |        6 | :heavy_check_mark:
-ld         |        6 |
+ld         |        6 | :heavy_check_mark:
 c.lui      |        6 |
 c.j        |        5 | :heavy_check_mark:
 c.ld       |        5 |

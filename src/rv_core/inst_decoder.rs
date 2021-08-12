@@ -80,6 +80,7 @@ impl InstDecoder {
         match opcode {
             0x3 => match funct3 {
                 0x2 => inst.id = InstID::LW,
+                0x3 => inst.id = InstID::LD,
                 _ => self.dump_invalid_inst(inst),
             }
             0x13 => match funct3 {
@@ -98,6 +99,7 @@ impl InstDecoder {
             }
             0x23 => match funct3 {
                 0x0 => inst.id = InstID::SB,
+                0x3 => inst.id = InstID::SD,
                 _ => self.dump_invalid_inst(inst),
             }
             0x63 => match funct3 {

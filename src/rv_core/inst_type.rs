@@ -306,6 +306,17 @@ pub mod tests {
         }
     }
 
+    pub fn inst_ld_code(rd: AddressType, rs1: AddressType, imm: AddressType) -> InstType {
+        InstType {
+            data: ((imm & 0xfff) << 20)
+                    | ((rd & 0x1f) << 7)
+                    | ((rs1 & 0x1f) << 15)
+                    | 0x3 | (0x3 << 12),
+            len: 4,
+            id: InstID::LD,
+        }
+    }
+
     pub fn inst_lw_code(rd: AddressType, rs1: AddressType, imm: AddressType) -> InstType {
         InstType {
             data: ((imm & 0xfff) << 20)

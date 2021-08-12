@@ -130,8 +130,10 @@ impl<'a> RVCore<'a> {
             InstID::C_SD => self.inst_c_sd(inst),
             InstID::JAL => self.inst_jal(inst),
             InstID::JALR => self.inst_jalr(inst),
+            InstID::LD => self.inst_ld(inst),
             InstID::LW => self.inst_lw(inst),
             InstID::SB => self.inst_sb(inst),
+            InstID::SD => self.inst_sd(inst),
             InstID::SLLI => self.inst_slli(inst),
             InstID::SRLI => self.inst_srli(inst),
             InstID::SRAI => self.inst_srai(inst),
@@ -372,12 +374,21 @@ impl<'a> RVCore<'a> {
 		print!(" {},{:x}({})", XRegisters::name(inst.get_rd()), self.pc, XRegisters::name(inst.get_rs1()));
     }
 
+    fn inst_ld(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_itype();
+        let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
+        let mut data = [0; 8];
+        self.read_memory(address, &mut data);
+        let mut wdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), wdata);
+    }
+
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_itype();
         let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
-        let mut data = [0; std::mem::size_of::<AddressType>()];
+        let mut data = [0; 4];
         self.read_memory(address, &mut data);
-        self.regs.write(inst.get_rd(), RVCore::byte_array_to_addr_type(&data));
+        self.regs.write(inst.get_rd(), RVCore::byte_array_to_addr_type_32b(&data) as AddressType);
     }
 
     fn inst_sb(&mut self, inst: &inst_type::InstType) {
@@ -385,6 +396,10 @@ impl<'a> RVCore<'a> {
         let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
         let data = self.regs.read(inst.get_rs2_stype());
         self.write_memory(address, &data.to_le_bytes()[..1]);
+    }
+
+    fn inst_sd(&mut self, inst: &inst_type::InstType) {
+        panic!("TODO: implement SD instruction");
     }
 
     fn inst_slli(&mut self, inst: &inst_type::InstType) {
@@ -623,6 +638,18 @@ mod tests {
         core.inst_jalr(&inst_jalr_code(8, 9, 0xfff));
         assert_eq!(4, core.regs.read(8));
         assert_eq!(0x66 - 2, core.pc);
+    }
+
+    #[test]
+    fn test_inst_ld() {
+        let mut core: RVCore = RVCore::new();
+        let mut mem_stub: MemoryStub = Default::default();
+        core.bind_mem(&mut mem_stub);
+
+        core.regs.write(1, 0x8888); // Address
+        core.inst_ld(&inst_ld_code(2, 1, 0xff0));
+        assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
+        assert_eq!(0x8888 + 0xff0, mem_stub.buffer.addr);
     }
 
     #[test]
