@@ -69,12 +69,14 @@ pub struct RVCore<'a> {
 
 impl<'a> RVCore<'a> {
     pub fn new() -> RVCore<'a> {
-        RVCore {
+        let mut core = RVCore {
             pc: 0,
             regs: XRegisters { reg_bank: [0; 32] },
             id_instance: inst_decoder::InstDecoder::new(),
             mem_if: None,
-        }
+        };
+        core.regs.write(2, 0x3ffffffb50);
+        core
     }
 
     fn step(&mut self) {
@@ -88,8 +90,11 @@ impl<'a> RVCore<'a> {
             panic!("Invalid instruction");
         }
 
-        print!("{:#010x} ({:#010x}) {}", self.pc, inst_bytes as u32,
+        print!("PC={:#010x}, {}", self.pc,
                     inst_info::inst_info_table[inst.id as usize].name);
+        for i in 0..32 {
+            print!(", r{}={:08x}", i, self.regs.read(i));
+        }
 
         self.execute(&inst);
 		println!("");
@@ -206,7 +211,7 @@ impl<'a> RVCore<'a> {
 
     fn inst_addi(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(),
-            self.regs.read(inst.get_rs1()) + inst.get_imm_itype());
+            self.regs.read(inst.get_rs1()).wrapping_add(RVCore::sign_extend(inst.get_imm_itype(), 12)));
     }
 
     fn inst_andi(&mut self, inst: &inst_type::InstType) {
@@ -221,8 +226,8 @@ impl<'a> RVCore<'a> {
 						| (((imm >> 1) & 0xf) << 1)
 						| (((imm >> 0) & 1) << 11);
 	    let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
-		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
-                XRegisters::name(inst.get_rs2_btype()), new_pc);
+		//print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+        //        XRegisters::name(inst.get_rs2_btype()), new_pc);
 		if (self.regs.read(inst.get_rs1()) as i64) == (self.regs.read(inst.get_rs2_btype()) as i64) {
 			self.pc = new_pc;
 		} else {
@@ -237,8 +242,8 @@ impl<'a> RVCore<'a> {
 						| (((imm >> 1) & 0xf) << 1)
 						| (((imm >> 0) & 1) << 11);
 	    let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
-		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
-                XRegisters::name(inst.get_rs2_btype()), new_pc);
+		//print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+        //        XRegisters::name(inst.get_rs2_btype()), new_pc);
 		if (self.regs.read(inst.get_rs1()) as i64) < (self.regs.read(inst.get_rs2_btype()) as i64) {
 			self.pc = new_pc;
 		} else {
@@ -253,8 +258,8 @@ impl<'a> RVCore<'a> {
 						| (((imm >> 1) & 0xf) << 1)
 						| (((imm >> 0) & 1) << 11);
 	    let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
-		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
-                XRegisters::name(inst.get_rs2_btype()), new_pc);
+		//print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+        //        XRegisters::name(inst.get_rs2_btype()), new_pc);
 		if self.regs.read(inst.get_rs1()) < self.regs.read(inst.get_rs2_btype()) {
 			self.pc = new_pc;
 		} else {
@@ -269,8 +274,8 @@ impl<'a> RVCore<'a> {
 						| (((imm >> 1) & 0xf) << 1)
 						| (((imm >> 0) & 1) << 11);
 	    let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
-		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
-                XRegisters::name(inst.get_rs2_btype()), new_pc);
+		//print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+        //        XRegisters::name(inst.get_rs2_btype()), new_pc);
 		if self.regs.read(inst.get_rs1()) >= self.regs.read(inst.get_rs2_btype()) {
 			self.pc = new_pc;
 		} else {
@@ -285,8 +290,8 @@ impl<'a> RVCore<'a> {
 						| (((imm >> 1) & 0xf) << 1)
 						| (((imm >> 0) & 1) << 11);
 	    let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
-		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
-                XRegisters::name(inst.get_rs2_btype()), new_pc);
+		//print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+        //        XRegisters::name(inst.get_rs2_btype()), new_pc);
 		if (self.regs.read(inst.get_rs1()) as i64) != (self.regs.read(inst.get_rs2_btype()) as i64) {
 			self.pc = new_pc;
 		} else {
@@ -295,12 +300,14 @@ impl<'a> RVCore<'a> {
     }
 
     fn inst_c_add(&mut self, inst: &inst_type::InstType) {
-        self.regs.write(inst.get_rd(), self.regs.read(inst.get_rd()) + self.regs.read(inst.get_rs2()));
+        let result = self.regs.read(inst.get_rd()).wrapping_add(self.regs.read(inst.get_rs2()));
+        self.regs.write(inst.get_rd(), result);
     }
 
     fn inst_c_addi(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_ci(), 6);
         self.regs.write(inst.get_rd(),
-            self.regs.read(inst.get_rd()) + inst.get_imm_ci());
+            self.regs.read(inst.get_rd()).wrapping_add(imm));
     }
 
     fn inst_c_addiw(&mut self, inst: &inst_type::InstType) {
@@ -325,7 +332,7 @@ impl<'a> RVCore<'a> {
 						| (((imm >> 3) & 0x3) << 6)
 						| (((imm >> 1) & 0x3) << 1)
 						| (((imm >> 0) & 0x1) << 5);
-		print!(" {},{:x}", XRegisters::name(inst.get_rs1_3b()), self.pc + offset);
+		//print!(" {},{:x}", XRegisters::name(inst.get_rs1_3b()), self.pc + offset);
 		if rs1_val == 0 {
 			self.pc += offset;
 		} else {
@@ -341,7 +348,7 @@ impl<'a> RVCore<'a> {
 						| (((imm >> 3) & 0x3) << 6)
 						| (((imm >> 1) & 0x3) << 1)
 						| (((imm >> 0) & 0x1) << 5);
-		print!(" {},{:x}", XRegisters::name(inst.get_rs1_3b()), self.pc + offset);
+		//print!(" {},{:x}", XRegisters::name(inst.get_rs1_3b()), self.pc + offset);
 		if rs1_val != 0 {
 			self.pc += offset;
 		} else {
@@ -378,7 +385,7 @@ impl<'a> RVCore<'a> {
     }
 
     fn inst_c_jr(&mut self, inst: &inst_type::InstType) {
-		print!(" {}", XRegisters::name(inst.get_rs1_cr()));
+		//print!(" {}", XRegisters::name(inst.get_rs1_cr()));
 		self.pc = self.regs.read(inst.get_rs1_cr());
     }
 
@@ -476,7 +483,7 @@ impl<'a> RVCore<'a> {
                     | (((imm >> 9) & 0x3ff) << 1)
                     | (((imm >> 8) & 0x1) << 11)
                     | (((imm >> 0) & 0xff) << 12);
-		print!(" {},{:x}", XRegisters::name(inst.get_rd()), self.pc);
+		//print!(" {},{:x}", XRegisters::name(inst.get_rd()), self.pc);
     }
 
 	fn sign_extend(mut input: AddressType, input_bit_len: usize) -> AddressType {
@@ -489,7 +496,7 @@ impl<'a> RVCore<'a> {
         self.regs.write(inst.get_rd(), self.pc + 4);
 		let offset = RVCore::sign_extend(inst.get_imm_itype(), 12);
         self.pc = (self.regs.read(inst.get_rs1()).wrapping_add(offset)) & !1u64;
-		print!(" {},{:x}({})", XRegisters::name(inst.get_rd()), self.pc, XRegisters::name(inst.get_rs1()));
+		//print!(" {},{:x}({})", XRegisters::name(inst.get_rd()), self.pc, XRegisters::name(inst.get_rs1()));
     }
 
     fn inst_ld(&mut self, inst: &inst_type::InstType) {

@@ -25,7 +25,7 @@ fn main() {
     core.pc = entry;
     core.run(200);
 
-    println!("Simulation ends");
+    //println!("Simulation ends");
 }
 
 fn load_elf(mem: &mut memory_model::MemoryModel, path: &str) -> AddressType {
@@ -40,6 +40,6 @@ fn load_elf(mem: &mut memory_model::MemoryModel, path: &str) -> AddressType {
         }
     }
 
-    println!("Entry = 0x{:x}", elf.entry);
+    //println!("Entry = 0x{:x}", elf.entry);
     elf.entry as AddressType
 }
