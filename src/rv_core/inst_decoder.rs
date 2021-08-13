@@ -44,6 +44,7 @@ impl InstDecoder {
         match opcode {
             0x0 => match funct3 {
                 0x2 => inst.id = InstID::C_LW,
+                0x3 => inst.id = InstID::C_LD,
                 0x6 => inst.id = InstID::C_SW,
                 0x7 => inst.id = InstID::C_SD,
                 _ => self.dump_invalid_inst(inst),
@@ -134,6 +135,7 @@ impl InstDecoder {
             }
             0x63 => match funct3 {
                 0x0 => inst.id = InstID::BEQ,
+                0x1 => inst.id = InstID::BNE,
                 0x4 => inst.id = InstID::BLT,
                 0x6 => inst.id = InstID::BLTU,
                 0x7 => inst.id = InstID::BGEU,

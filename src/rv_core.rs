@@ -118,6 +118,7 @@ impl<'a> RVCore<'a> {
             InstID::BLT => self.inst_blt(inst),
             InstID::BLTU => self.inst_bltu(inst),
             InstID::BGEU => self.inst_bgeu(inst),
+            InstID::BNE => self.inst_bne(inst),
             InstID::C_ADD => self.inst_c_add(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_ADDIW => self.inst_c_addiw(inst),
@@ -131,6 +132,7 @@ impl<'a> RVCore<'a> {
             InstID::C_SLLI => self.inst_c_slli(inst),
             InstID::C_SW => self.inst_c_sw(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
+            InstID::C_LD => self.inst_c_ld(inst),
             InstID::C_LW => self.inst_c_lw(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
             InstID::C_LI => self.inst_c_li(inst),
@@ -276,6 +278,22 @@ impl<'a> RVCore<'a> {
 		}
     }
 
+    fn inst_bne(&mut self, inst: &inst_type::InstType) {
+		let imm = inst.get_imm_btype();
+		let offset = (((imm >> 11) & 1) << 12)
+						| (((imm >> 5) & 0x3f) << 5)
+						| (((imm >> 1) & 0xf) << 1)
+						| (((imm >> 0) & 1) << 11);
+	    let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
+		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+                XRegisters::name(inst.get_rs2_btype()), new_pc);
+		if (self.regs.read(inst.get_rs1()) as i64) != (self.regs.read(inst.get_rs2_btype()) as i64) {
+			self.pc = new_pc;
+		} else {
+			self.pc += 4;
+		}
+    }
+
     fn inst_c_add(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(), self.regs.read(inst.get_rd()) + self.regs.read(inst.get_rs2()));
     }
@@ -392,6 +410,16 @@ impl<'a> RVCore<'a> {
         let address = self.regs.read(2) + (((imm & 0x3) << 6) | (imm & 0x3c));
         let data = self.regs.read(inst.get_rs2()) as u32;
         self.write_memory(address, &data.to_le_bytes());
+    }
+
+    fn inst_c_ld(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_cl();
+        let offset = (((imm >> 2) & 0x7) << 3)
+                        | (((imm >> 0) & 0x3) << 6);
+        let address = self.regs.read(inst.get_rs1_3b()) + offset;
+        let mut data = [0; 8];
+        self.read_memory(address, &mut data);
+        self.regs.write(inst.get_rd_cl(), RVCore::byte_array_to_addr_type(&data));
     }
 
     fn inst_c_lw(&mut self, inst: &inst_type::InstType) {
