@@ -23,7 +23,9 @@ fn main() {
     core.bind_mem(&mut mem);
 
     core.pc = entry;
-    core.run(100);
+    core.run(200);
+
+    println!("Simulation ends");
 }
 
 fn load_elf(mem: &mut memory_model::MemoryModel, path: &str) -> AddressType {

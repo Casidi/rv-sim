@@ -132,6 +132,7 @@ impl<'a> RVCore<'a> {
             InstID::C_LW => self.inst_c_lw(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
             InstID::C_LI => self.inst_c_li(inst),
+            InstID::C_LUI => self.inst_c_lui(inst),
             InstID::C_MV => self.inst_c_mv(inst),
             InstID::C_SUB => self.inst_c_sub(inst),
             InstID::C_SD => self.inst_c_sd(inst),
@@ -395,6 +396,12 @@ impl<'a> RVCore<'a> {
 
     fn inst_c_li(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(), inst.get_imm_ci());
+    }
+
+    fn inst_c_lui(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_ci();
+        let val = (((imm >> 5) & 1) << 17) | (((imm >> 0) & 0x1f) << 12);
+        self.regs.write(inst.get_rd(), RVCore::sign_extend(val, 18));
     }
 
     fn inst_c_mv(&mut self, inst: &inst_type::InstType) {

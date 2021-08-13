@@ -55,6 +55,7 @@ impl InstDecoder {
                     ArchType::RV64 => inst.id = InstID::C_ADDIW,
                     _ => panic!("Invalid arch type"),
                 }
+                0x3 => inst.id = InstID::C_LUI,
                 0x2 => inst.id = InstID::C_LI,
                 0x4 => {
                     let funct2 = (inst_bytes >> 10) & 3;

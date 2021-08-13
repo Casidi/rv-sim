@@ -31,7 +31,7 @@ jal        |        6 | :heavy_check_mark:
 c.bnez     |        6 | :heavy_check_mark:
 c.add      |        6 | :heavy_check_mark:
 ld         |        6 | :heavy_check_mark:
-c.lui      |        6 | next
+c.lui      |        6 | :heavy_check_mark:
 c.j        |        5 | :heavy_check_mark:
 c.ld       |        5 |
 lw         |        5 | :heavy_check_mark:
@@ -48,7 +48,7 @@ srai       |        3 | :heavy_check_mark:
 bgeu       |        2 | :heavy_check_mark:
 andi       |        2 | :heavy_check_mark:
 c.slli     |        2 | :heavy_check_mark:
-sub        |        2 |
+sub        |        2 | next
 c.addi4spn |        2 |
 beq        |        2 |
 slli       |        1 | :heavy_check_mark:
