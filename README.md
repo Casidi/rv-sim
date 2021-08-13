@@ -37,7 +37,7 @@ c.ld       |        5 |
 lw         |        5 | :heavy_check_mark:
 auipc      |        4 | :heavy_check_mark:
 c.addiw    |        4 | :heavy_check_mark:
-beqz       |        4 |
+beqz       |        4 | next
 c.jalr     |        4 |
 li         |        4 |
 bne        |        4 |
@@ -48,7 +48,7 @@ srai       |        3 | :heavy_check_mark:
 bgeu       |        2 | :heavy_check_mark:
 andi       |        2 | :heavy_check_mark:
 c.slli     |        2 | :heavy_check_mark:
-sub        |        2 | next
+sub        |        2 | :heavy_check_mark:
 c.addi4spn |        2 |
 beq        |        2 |
 slli       |        1 | :heavy_check_mark:

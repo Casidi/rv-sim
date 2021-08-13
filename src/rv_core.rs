@@ -145,6 +145,7 @@ impl<'a> RVCore<'a> {
             InstID::SLLI => self.inst_slli(inst),
             InstID::SRLI => self.inst_srli(inst),
             InstID::SRAI => self.inst_srai(inst),
+            InstID::SUB => self.inst_sub(inst),
             InstID::NOP => self.inst_nop(inst),
             InstID::INVALID => panic!("Execute: invalid instruction"),
         }
@@ -492,6 +493,12 @@ impl<'a> RVCore<'a> {
         let shamt = inst.get_shamt_itype();
 		let rs1_val = self.regs.read(inst.get_rs1());
         self.regs.write(inst.get_rd(), ((rs1_val as i64) >> shamt) as AddressType);
+    }
+
+    fn inst_sub(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+		let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        self.regs.write(inst.get_rd(), rs1_val.wrapping_sub(rs2_val));
     }
 }
 
