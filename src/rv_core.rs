@@ -101,6 +101,7 @@ impl<'a> RVCore<'a> {
             InstID::C_BEQZ => {}
             InstID::JAL => {}
             InstID::JALR => {}
+            InstID::BEQ => {}
             InstID::BLT => {}
             InstID::BLTU => {}
             InstID::BGEU => {}
@@ -113,6 +114,7 @@ impl<'a> RVCore<'a> {
             InstID::AUIPC => self.inst_auipc(inst),
             InstID::ADDI => self.inst_addi(inst),
             InstID::ANDI => self.inst_andi(inst),
+            InstID::BEQ => self.inst_beq(inst),
             InstID::BLT => self.inst_blt(inst),
             InstID::BLTU => self.inst_bltu(inst),
             InstID::BGEU => self.inst_bgeu(inst),
@@ -208,6 +210,22 @@ impl<'a> RVCore<'a> {
     fn inst_andi(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(),
             self.regs.read(inst.get_rs1()) & inst.get_imm_itype());
+    }
+
+    fn inst_beq(&mut self, inst: &inst_type::InstType) {
+		let imm = inst.get_imm_btype();
+		let offset = (((imm >> 11) & 1) << 12)
+						| (((imm >> 5) & 0x3f) << 5)
+						| (((imm >> 1) & 0xf) << 1)
+						| (((imm >> 0) & 1) << 11);
+	    let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
+		print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+                XRegisters::name(inst.get_rs2_btype()), new_pc);
+		if (self.regs.read(inst.get_rs1()) as i64) == (self.regs.read(inst.get_rs2_btype()) as i64) {
+			self.pc = new_pc;
+		} else {
+			self.pc += 4;
+		}
     }
 
     fn inst_blt(&mut self, inst: &inst_type::InstType) {

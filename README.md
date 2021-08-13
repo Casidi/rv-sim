@@ -33,11 +33,11 @@ c.add      |        6 | :heavy_check_mark:
 ld         |        6 | :heavy_check_mark:
 c.lui      |        6 | :heavy_check_mark:
 c.j        |        5 | :heavy_check_mark:
-c.ld       |        5 |
+c.ld       |        5 | next
 lw         |        5 | :heavy_check_mark:
 auipc      |        4 | :heavy_check_mark:
 c.addiw    |        4 | :heavy_check_mark:
-beqz       |        4 | next
+beqz(beq)  |        4 | :heavy_check_mark:
 c.jalr     |        4 |
 li         |        4 |
 bne        |        4 |
