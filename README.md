@@ -36,7 +36,7 @@ c.j        |        5 | :heavy_check_mark:
 c.ld       |        5 |
 lw         |        5 | :heavy_check_mark:
 auipc      |        4 | :heavy_check_mark:
-c.addiw    |        4 | next4
+c.addiw    |        4 | :heavy_check_mark:
 beqz       |        4 |
 c.jalr     |        4 |
 li         |        4 |

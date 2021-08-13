@@ -2,11 +2,22 @@ use crate::rv_core::inst_info::InstID;
 use crate::rv_core::inst_type::InstType;
 
 type AddressType = u64;
+enum ArchType {
+    RV32,
+    RV64,
+}
 
-#[derive(Default)]
-pub struct InstDecoder {}
+pub struct InstDecoder {
+    arch: ArchType,
+}
 
 impl InstDecoder {
+    pub fn new() -> InstDecoder {
+        InstDecoder {
+            arch: ArchType::RV64
+        }
+    }
+
     pub fn decode(&self, inst_bytes: AddressType) -> InstType {
         let mut new_inst = InstType {
             data: inst_bytes,
@@ -38,7 +49,11 @@ impl InstDecoder {
             }
             0x1 => match funct3 {
                 0x0 => inst.id = InstID::C_ADDI,
-                0x1 => inst.id = InstID::C_JAL,
+                0x1 => match self.arch {
+                    ArchType::RV32 => inst.id = InstID::C_JAL,
+                    ArchType::RV64 => inst.id = InstID::C_ADDIW,
+                    _ => panic!("Invalid arch type"),
+                }
                 0x2 => inst.id = InstID::C_LI,
                 0x4 => {
                     let funct2 = (inst_bytes >> 10) & 3;
@@ -128,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_decode() {
-        let decoder: InstDecoder = Default::default();
+        let decoder = InstDecoder::new();
         let inst_golden = inst_auipc_code(0, 0);
         let inst = decoder.decode(inst_golden.data);
 

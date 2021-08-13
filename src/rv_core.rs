@@ -72,7 +72,7 @@ impl<'a> RVCore<'a> {
         RVCore {
             pc: 0,
             regs: XRegisters { reg_bank: [0; 32] },
-            id_instance: inst_decoder::InstDecoder {},
+            id_instance: inst_decoder::InstDecoder::new(),
             mem_if: None,
         }
     }
@@ -118,6 +118,7 @@ impl<'a> RVCore<'a> {
             InstID::BGEU => self.inst_bgeu(inst),
             InstID::C_ADD => self.inst_c_add(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
+            InstID::C_ADDIW => self.inst_c_addiw(inst),
             InstID::C_ANDI => self.inst_c_andi(inst),
             InstID::C_BEQZ => self.inst_c_beqz(inst),
             InstID::C_BNEZ => self.inst_c_bnez(inst),
@@ -260,6 +261,13 @@ impl<'a> RVCore<'a> {
     fn inst_c_addi(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(),
             self.regs.read(inst.get_rd()) + inst.get_imm_ci());
+    }
+
+    fn inst_c_addiw(&mut self, inst: &inst_type::InstType) {
+        let rd_val = self.regs.read(inst.get_rd()) as u32;
+        let imm = RVCore::sign_extend(inst.get_imm_ci(), 6) as u32;
+        let result = rd_val.wrapping_add(imm) as AddressType;
+        self.regs.write(inst.get_rd(), result);
     }
 
     fn inst_c_andi(&mut self, inst: &inst_type::InstType) {
