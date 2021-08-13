@@ -126,6 +126,7 @@ impl<'a> RVCore<'a> {
             InstID::C_JAL => self.inst_c_jal(inst),
             InstID::C_JR => self.inst_c_jr(inst),
             InstID::C_SLLI => self.inst_c_slli(inst),
+            InstID::C_SW => self.inst_c_sw(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
             InstID::C_LW => self.inst_c_lw(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
@@ -346,6 +347,16 @@ impl<'a> RVCore<'a> {
         let imm = inst.get_imm_ci();
         let rd_val = self.regs.read(inst.get_rd());
         self.regs.write(inst.get_rd(), rd_val << imm);
+    }
+
+    fn inst_c_sw(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_cl();
+        let offset = (((imm >> 2) & 0x7) << 3)
+                        | (((imm >> 1) & 1) << 2)
+                        | (((imm >> 0) & 1) << 6);
+        let address = self.regs.read(inst.get_rs1_3b()) + offset;
+        let data = self.regs.read(inst.get_rs2_3b()) as u32;
+        self.write_memory(address, &data.to_le_bytes());
     }
 
     fn inst_c_swsp(&mut self, inst: &inst_type::InstType) {

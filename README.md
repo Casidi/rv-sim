@@ -57,7 +57,7 @@ c.andi     |        1 | :heavy_check_mark:
 sd         |        1 | :heavy_check_mark:
 c.lw       |        1 | :heavy_check_mark:
 blt        |        1 | :heavy_check_mark:
-c.sw       |        1 |
+c.sw       |        1 | :heavy_check_mark:
 c.lwsp     |        1 | :heavy_check_mark:
 addiw      |        1 |
 bltz       |        1 |
