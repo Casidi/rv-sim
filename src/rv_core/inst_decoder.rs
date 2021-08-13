@@ -86,6 +86,7 @@ impl InstDecoder {
                     }
                 }
                 0x6 => inst.id = InstID::C_SWSP,
+                0x7 => inst.id = InstID::C_SDSP,
                 _ => self.dump_invalid_inst(inst),
             },
             _ => self.dump_invalid_inst(inst),

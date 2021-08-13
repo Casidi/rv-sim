@@ -17,7 +17,7 @@ A RISC-V instruction-accurate simulator
 ## Instruction Status
 Name       | Execution<br>Count | Implemented
 -----      | -----    | -----
-c.sdsp     |       22 |
+c.sdsp     |       22 | :heavy_check_mark:
 c.ldsp     |       20 |
 c.addi     |       19 | :heavy_check_mark:
 addi       |       14 | :heavy_check_mark:
@@ -31,7 +31,7 @@ jal        |        6 | :heavy_check_mark:
 c.bnez     |        6 | :heavy_check_mark:
 c.add      |        6 | :heavy_check_mark:
 ld         |        6 | :heavy_check_mark:
-c.lui      |        6 |
+c.lui      |        6 | next
 c.j        |        5 | :heavy_check_mark:
 c.ld       |        5 |
 lw         |        5 | :heavy_check_mark:
