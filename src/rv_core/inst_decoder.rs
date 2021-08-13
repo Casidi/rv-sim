@@ -59,6 +59,7 @@ impl InstDecoder {
                 _ => self.dump_invalid_inst(inst),
             },
             0x2 => match funct3 {
+                0x0 => inst.id = InstID::C_SLLI,
                 0x2 => inst.id = InstID::C_LWSP,
                 0x4 => {
                     match ((inst_bytes >> 12) & 1, (inst_bytes >> 2) & 0x1f) {

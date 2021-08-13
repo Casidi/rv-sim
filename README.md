@@ -47,7 +47,7 @@ bltu       |        3 | :heavy_check_mark:
 srai       |        3 | :heavy_check_mark:
 bgeu       |        2 | :heavy_check_mark:
 andi       |        2 | :heavy_check_mark:
-c.slli     |        2 | next3
+c.slli     |        2 | :heavy_check_mark:
 sub        |        2 |
 c.addi4spn |        2 |
 beq        |        2 |

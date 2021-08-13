@@ -124,6 +124,7 @@ impl<'a> RVCore<'a> {
             InstID::C_J => self.inst_c_j(inst),
             InstID::C_JAL => self.inst_c_jal(inst),
             InstID::C_JR => self.inst_c_jr(inst),
+            InstID::C_SLLI => self.inst_c_slli(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
             InstID::C_LW => self.inst_c_lw(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
@@ -331,6 +332,12 @@ impl<'a> RVCore<'a> {
     fn inst_c_jr(&mut self, inst: &inst_type::InstType) {
 		print!(" {}", XRegisters::name(inst.get_rs1_cr()));
 		self.pc = self.regs.read(inst.get_rs1_cr());
+    }
+
+    fn inst_c_slli(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_ci();
+        let rd_val = self.regs.read(inst.get_rd());
+        self.regs.write(inst.get_rd(), rd_val << imm);
     }
 
     fn inst_c_swsp(&mut self, inst: &inst_type::InstType) {
