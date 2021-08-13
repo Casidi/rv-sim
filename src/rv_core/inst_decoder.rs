@@ -32,6 +32,7 @@ impl InstDecoder {
         let funct3 = (inst_bytes >> 13) & 7;
         match opcode {
             0x0 => match funct3 {
+                0x2 => inst.id = InstID::C_LW,
                 0x7 => inst.id = InstID::C_SD,
                 _ => self.dump_invalid_inst(inst),
             }

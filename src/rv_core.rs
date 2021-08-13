@@ -123,6 +123,7 @@ impl<'a> RVCore<'a> {
             InstID::C_JAL => self.inst_c_jal(inst),
             InstID::C_JR => self.inst_c_jr(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
+            InstID::C_LW => self.inst_c_lw(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
             InstID::C_LI => self.inst_c_li(inst),
             InstID::C_MV => self.inst_c_mv(inst),
@@ -321,12 +322,23 @@ impl<'a> RVCore<'a> {
         self.write_memory(address, &data.to_le_bytes());
     }
 
+    fn inst_c_lw(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_cl();
+        let offset = (((imm >> 2) & 0x7) << 3)
+                        | (((imm >> 1) & 1) << 2)
+                        | (((imm >> 0) & 1) << 6);
+        let address = self.regs.read(inst.get_rs1_3b()) + offset;
+        let mut data = [0; 4];
+        self.read_memory(address, &mut data);
+        self.regs.write(inst.get_rd_cl(), RVCore::byte_array_to_addr_type_32b(&data));
+    }
+
     fn inst_c_lwsp(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_ci();
         let address = self.regs.read(2) + (((imm & 0x3) << 6) | (imm & 0x3c));
         let mut data = [0; 4];
         self.read_memory(address, &mut data);
-        self.regs.write(inst.get_rd(), RVCore::byte_array_to_addr_type_32b(&data));
+        self.regs.write(inst.get_rd_3b(), RVCore::byte_array_to_addr_type_32b(&data));
     }
 
     fn inst_c_li(&mut self, inst: &inst_type::InstType) {
@@ -570,6 +582,18 @@ mod tests {
         assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
         assert_eq!(0x888c, mem_stub.buffer.addr);
         assert_eq!([0x78, 0x56, 0x34, 0x12].to_vec(), mem_stub.buffer.data);
+    }
+
+    #[test]
+    fn test_inst_c_lw() {
+        let mut core: RVCore = RVCore::new();
+        let mut mem_stub: MemoryStub = Default::default();
+        core.bind_mem(&mut mem_stub);
+
+        core.regs.write(9, 0x8888); // Address
+        core.inst_c_lw(&inst_c_lw_code(8, 9, 0x4));
+        assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
+        assert_eq!(0x888c, mem_stub.buffer.addr);
     }
 
     #[test]

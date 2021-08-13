@@ -9,6 +9,9 @@ A RISC-V instruction-accurate simulator
 - [x] Encapsulate integer registers into a struct, use read/write API to access
 - [x] Implement one RV64I instruction and reserve the flexibility for 64-bit mode (ex. ADDIW)
 - [ ] (28/49) Able to run hello world program (empty main only)
+- [ ] (/40) Support all RV32I instructions
+- [ ] (/15) Support all RV64I instructions
+- [ ] (/49) Support all RVC instructions
 - [ ] Pass [riscv-tests](https://github.com/riscv/riscv-tests)
 
 ## Instruction Status
@@ -52,7 +55,7 @@ slli       |        1 | :heavy_check_mark:
 jalr       |        1 | :heavy_check_mark:
 c.andi     |        1 | :heavy_check_mark:
 sd         |        1 | :heavy_check_mark:
-c.lw       |        1 | next1
+c.lw       |        1 | :heavy_check_mark:
 blt        |        1 | next2
 c.sw       |        1 |
 c.lwsp     |        1 | :heavy_check_mark:

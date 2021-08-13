@@ -16,6 +16,10 @@ impl InstType {
         (((self.data >> 7) & 0x7) + 8) as usize
     }
 
+    pub fn get_rd_cl(&self) -> usize {
+        (((self.data >> 2) & 0x7) + 8) as usize
+    }
+
     pub fn get_rs1(&self) -> usize {
         (((self.data >> 15) & 0x1f)) as usize
     }
@@ -87,6 +91,11 @@ impl InstType {
     }
 
     pub fn get_imm_cs(&self) -> AddressType {
+        (((self.data >> 10) & 0x7) << 2)
+            | ((self.data >> 5) & 0x3)
+    }
+
+    pub fn get_imm_cl(&self) -> AddressType {
         (((self.data >> 10) & 0x7) << 2)
             | ((self.data >> 5) & 0x3)
     }
@@ -232,6 +241,18 @@ pub mod tests {
                     | 0x2 | (0x6 << 13),
             len: 2,
             id: InstID::C_SWSP,
+        }
+    }
+
+    pub fn inst_c_lw_code(rd_3b: AddressType, rs1_3b: AddressType, offset: AddressType) -> InstType {
+        InstType {
+            data: (((rs1_3b - 8) & 0x7) << 7) | (((rd_3b - 8) & 0x7) << 2)
+                    | (((offset >> 3) & 0x7) << 10)
+                    | (((offset >> 2) & 0x1) << 6)
+                    | (((offset >> 6) & 0x1) << 5)
+                    | 0x0 | (0x2 << 13),
+            len: 2,
+            id: InstID::C_LW,
         }
     }
 
