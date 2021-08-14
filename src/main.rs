@@ -20,8 +20,12 @@ fn main() {
     let mut mem = memory_model::MemoryModel::new();
 
     // Hack for hello world
-    core.regs.write(2, 0x3ffffffb50);
-    mem.write_byte(0x3ffffffb50, 0x1);
+    //core.regs.write(2, 0x3ffffffb50);
+    //mem.write_byte(0x3ffffffb50, 0x1);
+
+    // Hack for coremark
+    core.regs.write(2, 0x3ffffffb40);
+    mem.write_byte(0x3ffffffb40, 0x1);
 
     let entry = load_elf(&mut mem, elf_path);
     core.bind_mem(&mut mem);

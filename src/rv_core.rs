@@ -563,10 +563,12 @@ impl<'a> RVCore<'a> {
     fn inst_jal(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(), self.pc + 4);
         let imm = inst.get_imm_jtype();
-        self.pc += (((imm >> 19) & 1) << 20)
+        let mut offset = (((imm >> 19) & 1) << 20)
             | (((imm >> 9) & 0x3ff) << 1)
             | (((imm >> 8) & 0x1) << 11)
             | (((imm >> 0) & 0xff) << 12);
+        offset = RVCore::sign_extend(offset, 21);
+        self.pc = self.pc.wrapping_add(offset);
         //print!(" {},{:x}", XRegisters::name(inst.get_rd()), self.pc);
     }
 
