@@ -43,6 +43,7 @@ impl InstDecoder {
         let funct3 = (inst_bytes >> 13) & 7;
         match opcode {
             0x0 => match funct3 {
+                0x0 => inst.id = InstID::C_ADDI4SPN,
                 0x2 => inst.id = InstID::C_LW,
                 0x3 => inst.id = InstID::C_LD,
                 0x6 => inst.id = InstID::C_SW,
@@ -56,7 +57,14 @@ impl InstDecoder {
                     ArchType::RV64 => inst.id = InstID::C_ADDIW,
                     _ => panic!("Invalid arch type"),
                 }
-                0x3 => inst.id = InstID::C_LUI,
+                0x3 => {
+                    let rd = inst.get_rd();
+                    match rd {
+                        0 => self.dump_invalid_inst(inst),
+                        2 => inst.id = InstID::C_ADDI16SP,
+                        _ => inst.id = InstID::C_LUI,
+                    }
+                }
                 0x2 => inst.id = InstID::C_LI,
                 0x4 => {
                     let funct2 = (inst_bytes >> 10) & 3;

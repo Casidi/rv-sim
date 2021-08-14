@@ -129,6 +129,8 @@ impl<'a> RVCore<'a> {
             InstID::C_ADD => self.inst_c_add(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
             InstID::C_ADDIW => self.inst_c_addiw(inst),
+            InstID::C_ADDI16SP => self.inst_c_addi16sp(inst),
+            InstID::C_ADDI4SPN => self.inst_c_addi4spn(inst),
             InstID::C_ANDI => self.inst_c_andi(inst),
             InstID::C_BEQZ => self.inst_c_beqz(inst),
             InstID::C_BNEZ => self.inst_c_bnez(inst),
@@ -319,6 +321,27 @@ impl<'a> RVCore<'a> {
         let imm = RVCore::sign_extend(inst.get_imm_ci(), 6) as u32;
         let result = rd_val.wrapping_add(imm) as AddressType;
         self.regs.write(inst.get_rd(), result);
+    }
+
+    fn inst_c_addi16sp(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_ci();
+        let val = (((imm >> 5) & 1) << 9)
+                    | (((imm >> 4) & 0x1) << 4)
+                    | (((imm >> 3) & 0x1) << 6)
+                    | (((imm >> 1) & 0x3) << 7)
+                    | (((imm >> 0) & 0x1) << 5);
+        let old_sp = self.regs.read(2);
+        self.regs.write(2, old_sp.wrapping_add(RVCore::sign_extend(val, 10)));
+    }
+
+    fn inst_c_addi4spn(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_ciw();
+        let val = (((imm >> 6) & 0x3) << 4)
+                    | (((imm >> 2) & 0xf) << 6)
+                    | (((imm >> 1) & 0x1) << 2)
+                    | (((imm >> 0) & 0x1) << 3);
+        let old_sp = self.regs.read(2);
+        self.regs.write(inst.get_rd_ciw(), old_sp.wrapping_add(val));
     }
 
     fn inst_c_andi(&mut self, inst: &inst_type::InstType) {

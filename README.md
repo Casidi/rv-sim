@@ -41,7 +41,7 @@ beqz(beq)  |        4 | :heavy_check_mark:
 c.jalr     |        4 | :heavy_check_mark:
 li(addi)   |        4 | :heavy_check_mark:
 bne        |        4 | :heavy_check_mark:
-c.addi16sp |        4 | next1
+c.addi16sp |        4 | :heavy_check_mark:
 c.sub      |        3 | :heavy_check_mark:
 bltu       |        3 | :heavy_check_mark:
 srai       |        3 | :heavy_check_mark:
@@ -49,7 +49,7 @@ bgeu       |        2 | :heavy_check_mark:
 andi       |        2 | :heavy_check_mark:
 c.slli     |        2 | :heavy_check_mark:
 sub        |        2 | :heavy_check_mark:
-c.addi4spn |        2 | next2
+c.addi4spn |        2 | :heavy_check_mark:
 beq        |        2 |
 slli       |        1 | :heavy_check_mark:
 jalr       |        1 | :heavy_check_mark:
@@ -59,7 +59,7 @@ c.lw       |        1 | :heavy_check_mark:
 blt        |        1 | :heavy_check_mark:
 c.sw       |        1 | :heavy_check_mark:
 c.lwsp     |        1 | :heavy_check_mark:
-addiw      |        1 |
+addiw      |        1 | next
 bltz       |        1 |
 sw         |        1 |
 sllw       |        1 |

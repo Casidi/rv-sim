@@ -20,6 +20,10 @@ impl InstType {
         (((self.data >> 2) & 0x7) + 8) as usize
     }
 
+    pub fn get_rd_ciw(&self) -> usize {
+        (((self.data >> 2) & 0x7) + 8) as usize
+    }
+
     pub fn get_rs1(&self) -> usize {
         (((self.data >> 15) & 0x1f)) as usize
     }
@@ -102,6 +106,10 @@ impl InstType {
     pub fn get_imm_cl(&self) -> AddressType {
         (((self.data >> 10) & 0x7) << 2)
             | ((self.data >> 5) & 0x3)
+    }
+
+    pub fn get_imm_ciw(&self) -> AddressType {
+        (self.data >> 5) & 0xff
     }
 }
 
