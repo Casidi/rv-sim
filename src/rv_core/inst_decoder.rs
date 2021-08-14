@@ -79,6 +79,7 @@ impl InstDecoder {
             0x2 => match funct3 {
                 0x0 => inst.id = InstID::C_SLLI,
                 0x2 => inst.id = InstID::C_LWSP,
+                0x3 => inst.id = InstID::C_LDSP,
                 0x4 => {
                     match ((inst_bytes >> 12) & 1, (inst_bytes >> 2) & 0x1f) {
                         (0, 0) => inst.id = InstID::C_JR,

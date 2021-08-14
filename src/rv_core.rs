@@ -141,6 +141,7 @@ impl<'a> RVCore<'a> {
             InstID::C_SW => self.inst_c_sw(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
             InstID::C_LD => self.inst_c_ld(inst),
+            InstID::C_LDSP => self.inst_c_ldsp(inst),
             InstID::C_LW => self.inst_c_lw(inst),
             InstID::C_LWSP => self.inst_c_lwsp(inst),
             InstID::C_LI => self.inst_c_li(inst),
@@ -438,6 +439,14 @@ impl<'a> RVCore<'a> {
         self.regs.write(inst.get_rd_cl(), RVCore::byte_array_to_addr_type(&data));
     }
 
+    fn inst_c_ldsp(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_ci();
+        let address = self.regs.read(2) + (((imm & 0x7) << 6) | (imm & 0x38));
+        let mut data = [0; 8];
+        self.read_memory(address, &mut data);
+        self.regs.write(inst.get_rd(), RVCore::byte_array_to_addr_type(&data));
+    }
+
     fn inst_c_lw(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_cl();
         let offset = (((imm >> 2) & 0x7) << 3)
@@ -454,7 +463,7 @@ impl<'a> RVCore<'a> {
         let address = self.regs.read(2) + (((imm & 0x3) << 6) | (imm & 0x3c));
         let mut data = [0; 4];
         self.read_memory(address, &mut data);
-        self.regs.write(inst.get_rd_3b(), RVCore::byte_array_to_addr_type_32b(&data));
+        self.regs.write(inst.get_rd(), RVCore::byte_array_to_addr_type_32b(&data));
     }
 
     fn inst_c_li(&mut self, inst: &inst_type::InstType) {

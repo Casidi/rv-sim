@@ -32,7 +32,7 @@ impl MemoryModel {
     }
 
     pub fn read_byte(&mut self, addr: AddressType) -> u8 {
-        let block_base = addr & 0xffffffe0;
+        let block_base = addr & (!(0x1f as AddressType));
         let block_offset = addr - block_base;
         if !self.data.contains_key(&block_base) {
             self.data.insert(block_base, [0; 32]);

@@ -18,7 +18,7 @@ A RISC-V instruction-accurate simulator
 Name       | Execution<br>Count | Implemented
 -----      | -----    | -----
 c.sdsp     |       22 | :heavy_check_mark:
-c.ldsp     |       20 | next
+c.ldsp     |       20 | :heavy_check_mark:
 c.addi     |       19 | :heavy_check_mark:
 addi       |       14 | :heavy_check_mark:
 c.li       |       14 | :heavy_check_mark:
@@ -41,7 +41,7 @@ beqz(beq)  |        4 | :heavy_check_mark:
 c.jalr     |        4 | :heavy_check_mark:
 li(addi)   |        4 | :heavy_check_mark:
 bne        |        4 | :heavy_check_mark:
-c.addi16sp |        4 |
+c.addi16sp |        4 | next1
 c.sub      |        3 | :heavy_check_mark:
 bltu       |        3 | :heavy_check_mark:
 srai       |        3 | :heavy_check_mark:
@@ -49,7 +49,7 @@ bgeu       |        2 | :heavy_check_mark:
 andi       |        2 | :heavy_check_mark:
 c.slli     |        2 | :heavy_check_mark:
 sub        |        2 | :heavy_check_mark:
-c.addi4spn |        2 |
+c.addi4spn |        2 | next2
 beq        |        2 |
 slli       |        1 | :heavy_check_mark:
 jalr       |        1 | :heavy_check_mark:
