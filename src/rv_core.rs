@@ -120,6 +120,7 @@ impl<'a> RVCore<'a> {
         match inst.id {
             InstID::AUIPC => self.inst_auipc(inst),
             InstID::ADDI => self.inst_addi(inst),
+            InstID::ADDIW => self.inst_addiw(inst),
             InstID::ANDI => self.inst_andi(inst),
             InstID::BEQ => self.inst_beq(inst),
             InstID::BLT => self.inst_blt(inst),
@@ -157,7 +158,9 @@ impl<'a> RVCore<'a> {
             InstID::LW => self.inst_lw(inst),
             InstID::SB => self.inst_sb(inst),
             InstID::SD => self.inst_sd(inst),
+            InstID::SW => self.inst_sw(inst),
             InstID::SLLI => self.inst_slli(inst),
+            InstID::SLLW => self.inst_sllw(inst),
             InstID::SRLI => self.inst_srli(inst),
             InstID::SRAI => self.inst_srai(inst),
             InstID::SUB => self.inst_sub(inst),
@@ -218,6 +221,12 @@ impl<'a> RVCore<'a> {
     fn inst_addi(&mut self, inst: &inst_type::InstType) {
         self.regs.write(inst.get_rd(),
             self.regs.read(inst.get_rs1()).wrapping_add(RVCore::sign_extend(inst.get_imm_itype(), 12)));
+    }
+
+    fn inst_addiw(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        let wdata = self.regs.read(inst.get_rs1()).wrapping_add(imm);
+        self.regs.write(inst.get_rd(), wdata);
     }
 
     fn inst_andi(&mut self, inst: &inst_type::InstType) {
@@ -571,10 +580,23 @@ impl<'a> RVCore<'a> {
         self.write_memory(address, &data.to_le_bytes());
     }
 
+    fn inst_sw(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_stype();
+        let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
+        let data = self.regs.read(inst.get_rs2_stype()) as u32;
+        self.write_memory(address, &data.to_le_bytes());
+    }
+
     fn inst_slli(&mut self, inst: &inst_type::InstType) {
         let shamt = inst.get_shamt_itype();
 		let rs1_val = self.regs.read(inst.get_rs1());
         self.regs.write(inst.get_rd(), rs1_val << shamt);
+    }
+
+    fn inst_sllw(&mut self, inst: &inst_type::InstType) {
+		let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        self.regs.write(inst.get_rd(), rs1_val << rs2_val);
     }
 
     fn inst_srli(&mut self, inst: &inst_type::InstType) {

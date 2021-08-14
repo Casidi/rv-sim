@@ -59,10 +59,10 @@ c.lw       |        1 | :heavy_check_mark:
 blt        |        1 | :heavy_check_mark:
 c.sw       |        1 | :heavy_check_mark:
 c.lwsp     |        1 | :heavy_check_mark:
-addiw      |        1 | next
-bltz       |        1 |
-sw         |        1 |
-sllw       |        1 |
+addiw      |        1 | :heavy_check_mark:
+bltz(blt)  |        1 | :heavy_check_mark:
+sw         |        1 | :heavy_check_mark:
+sllw       |        1 | :heavy_check_mark:
 c.and      |        1 |
 lbu        |        1 |
 ecall      |        1 |
