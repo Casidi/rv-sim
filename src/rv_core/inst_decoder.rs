@@ -14,7 +14,7 @@ pub struct InstDecoder {
 impl InstDecoder {
     pub fn new() -> InstDecoder {
         InstDecoder {
-            arch: ArchType::RV64
+            arch: ArchType::RV64,
         }
     }
 
@@ -49,14 +49,13 @@ impl InstDecoder {
                 0x6 => inst.id = InstID::C_SW,
                 0x7 => inst.id = InstID::C_SD,
                 _ => self.dump_invalid_inst(inst),
-            }
+            },
             0x1 => match funct3 {
                 0x0 => inst.id = InstID::C_ADDI,
                 0x1 => match self.arch {
                     ArchType::RV32 => inst.id = InstID::C_JAL,
                     ArchType::RV64 => inst.id = InstID::C_ADDIW,
-                    _ => panic!("Invalid arch type"),
-                }
+                },
                 0x3 => {
                     let rd = inst.get_rd();
                     match rd {
@@ -70,12 +69,11 @@ impl InstDecoder {
                     let funct2 = (inst_bytes >> 10) & 3;
                     match funct2 {
                         0x2 => inst.id = InstID::C_ANDI,
-                        0x3 =>  {
-                            match ((inst_bytes >> 12) & 1, (inst_bytes >> 5) & 0b11) {
-                                (0, 0) => inst.id = InstID::C_SUB,
-                                (_, _) => self.dump_invalid_inst(inst),
-                            }
-                        }
+                        0x3 => match ((inst_bytes >> 12) & 1, (inst_bytes >> 5) & 0b11) {
+                            (0, 0) => inst.id = InstID::C_SUB,
+                            (0, 3) => inst.id = InstID::C_AND,
+                            (_, _) => self.dump_invalid_inst(inst),
+                        },
                         _ => self.dump_invalid_inst(inst),
                     }
                 }
@@ -88,15 +86,13 @@ impl InstDecoder {
                 0x0 => inst.id = InstID::C_SLLI,
                 0x2 => inst.id = InstID::C_LWSP,
                 0x3 => inst.id = InstID::C_LDSP,
-                0x4 => {
-                    match ((inst_bytes >> 12) & 1, (inst_bytes >> 2) & 0x1f) {
-                        (0, 0) => inst.id = InstID::C_JR,
-                        (0, _) => inst.id = InstID::C_MV,
-                        (1, 0) => inst.id = InstID::C_JALR,
-                        (1, _) => inst.id = InstID::C_ADD,
-                        (_, _) => self.dump_invalid_inst(inst),
-                    }
-                }
+                0x4 => match ((inst_bytes >> 12) & 1, (inst_bytes >> 2) & 0x1f) {
+                    (0, 0) => inst.id = InstID::C_JR,
+                    (0, _) => inst.id = InstID::C_MV,
+                    (1, 0) => inst.id = InstID::C_JALR,
+                    (1, _) => inst.id = InstID::C_ADD,
+                    (_, _) => self.dump_invalid_inst(inst),
+                },
                 0x6 => inst.id = InstID::C_SWSP,
                 0x7 => inst.id = InstID::C_SDSP,
                 _ => self.dump_invalid_inst(inst),
@@ -112,32 +108,33 @@ impl InstDecoder {
             0x3 => match funct3 {
                 0x2 => inst.id = InstID::LW,
                 0x3 => inst.id = InstID::LD,
+                0x4 => inst.id = InstID::LBU,
                 _ => self.dump_invalid_inst(inst),
-            }
+            },
             0x13 => match funct3 {
                 0x0 => inst.id = InstID::ADDI,
                 0x1 => inst.id = InstID::SLLI,
                 0x5 => match (inst_bytes >> 25) & 0x7f {
-					0x0 => inst.id = InstID::SRLI,
-					0x20 => inst.id = InstID::SRAI,
-					_ => self.dump_invalid_inst(inst),
-				}
+                    0x0 => inst.id = InstID::SRLI,
+                    0x20 => inst.id = InstID::SRAI,
+                    _ => self.dump_invalid_inst(inst),
+                },
                 0x7 => inst.id = InstID::ANDI,
                 _ => self.dump_invalid_inst(inst),
-            }
+            },
             0x17 => {
                 inst.id = InstID::AUIPC;
             }
             0x1b => match funct3 {
                 0x0 => inst.id = InstID::ADDIW,
                 _ => self.dump_invalid_inst(inst),
-            }
+            },
             0x23 => match funct3 {
                 0x0 => inst.id = InstID::SB,
                 0x2 => inst.id = InstID::SW,
                 0x3 => inst.id = InstID::SD,
                 _ => self.dump_invalid_inst(inst),
-            }
+            },
             0x33 => match funct3 {
                 0x0 => {
                     let funct7 = (inst_bytes >> 25) & 0x7f;
@@ -147,7 +144,7 @@ impl InstDecoder {
                     }
                 }
                 _ => self.dump_invalid_inst(inst),
-            }
+            },
             0x3b => match funct3 {
                 0x1 => {
                     let funct7 = (inst_bytes >> 25) & 0x7f;
@@ -157,7 +154,7 @@ impl InstDecoder {
                     }
                 }
                 _ => self.dump_invalid_inst(inst),
-            }
+            },
             0x63 => match funct3 {
                 0x0 => inst.id = InstID::BEQ,
                 0x1 => inst.id = InstID::BNE,
@@ -165,9 +162,10 @@ impl InstDecoder {
                 0x6 => inst.id = InstID::BLTU,
                 0x7 => inst.id = InstID::BGEU,
                 _ => self.dump_invalid_inst(inst),
-            }
+            },
             0x67 => inst.id = InstID::JALR,
             0x6f => inst.id = InstID::JAL,
+            0x73 => inst.id = InstID::ECALL,
             _ => self.dump_invalid_inst(inst),
         }
     }

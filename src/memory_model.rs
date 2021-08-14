@@ -1,5 +1,5 @@
+use crate::memory_interface::{MemoryInterface, MemoryOperation, Payload};
 use std::collections::HashMap;
-use crate::memory_interface::{Payload, MemoryInterface, MemoryOperation};
 type AddressType = u64;
 
 pub struct MemoryModel {
@@ -83,7 +83,7 @@ mod tests {
         mem.access_memory(&mut payload);
         payload.op = MemoryOperation::READ;
         mem.access_memory(&mut payload);
-        assert_eq!([0,0,0,0,0].to_vec(), payload.data);
+        assert_eq!([0, 0, 0, 0, 0].to_vec(), payload.data);
 
         for i in 0..payload.data.len() {
             payload.data[i] = (i as u8 + 1) * 11;
@@ -92,6 +92,6 @@ mod tests {
         mem.access_memory(&mut payload);
         payload.op = MemoryOperation::READ;
         mem.access_memory(&mut payload);
-        assert_eq!([11,22,33,44,55].to_vec(), payload.data);
+        assert_eq!([11, 22, 33, 44, 55].to_vec(), payload.data);
     }
 }

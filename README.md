@@ -8,7 +8,7 @@ A RISC-V instruction-accurate simulator
 ## TODO
 - [x] Encapsulate integer registers into a struct, use read/write API to access
 - [x] Implement one RV64I instruction and reserve the flexibility for 64-bit mode (ex. ADDIW)
-- [ ] (28/49) Able to run hello world program (empty main only)
+- [x] (49/49) Able to run hello world program (empty main only), match pctrace to Spike
 - [ ] (/40) Support all RV32I instructions
 - [ ] (/15) Support all RV64I instructions
 - [ ] (/49) Support all RVC instructions
@@ -50,7 +50,7 @@ andi       |        2 | :heavy_check_mark:
 c.slli     |        2 | :heavy_check_mark:
 sub        |        2 | :heavy_check_mark:
 c.addi4spn |        2 | :heavy_check_mark:
-beq        |        2 |
+beq        |        2 | :heavy_check_mark:
 slli       |        1 | :heavy_check_mark:
 jalr       |        1 | :heavy_check_mark:
 c.andi     |        1 | :heavy_check_mark:
@@ -63,9 +63,9 @@ addiw      |        1 | :heavy_check_mark:
 bltz(blt)  |        1 | :heavy_check_mark:
 sw         |        1 | :heavy_check_mark:
 sllw       |        1 | :heavy_check_mark:
-c.and      |        1 |
-lbu        |        1 |
-ecall      |        1 |
+c.and      |        1 | :heavy_check_mark:
+lbu        |        1 | :heavy_check_mark:
+ecall      |        1 | :heavy_check_mark:
 c.swsp     |          | :heavy_check_mark:
 c.jal      |          | :heavy_check_mark:
 srli       |          | :heavy_check_mark:

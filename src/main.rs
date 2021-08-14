@@ -3,15 +3,15 @@ mod memory_interface;
 mod memory_model;
 mod rv_core;
 use goblin::elf;
-use std::fs;
 use std::env;
+use std::fs;
 type AddressType = u64;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() == 1 {
         println!("Error, should provide the ELF to run");
-        return
+        return;
     }
 
     let elf_path = &args[1];
@@ -19,11 +19,16 @@ fn main() {
     let mut core: rv_core::RVCore = rv_core::RVCore::new();
     let mut mem = memory_model::MemoryModel::new();
 
+    // Hack for hello world
+    core.regs.write(2, 0x3ffffffb50);
+    mem.write_byte(0x3ffffffb50, 0x1);
+
     let entry = load_elf(&mut mem, elf_path);
     core.bind_mem(&mut mem);
 
     core.pc = entry;
-    core.run(200);
+
+    core.run(300);
 
     //println!("Simulation ends");
 }
@@ -34,8 +39,10 @@ fn load_elf(mem: &mut memory_model::MemoryModel, path: &str) -> AddressType {
     for ph in elf.program_headers {
         if ph.p_type == goblin::elf::program_header::PT_LOAD {
             for offset in 0..ph.p_filesz {
-                mem.write_byte((ph.p_paddr + offset) as AddressType,
-                                    bytes[(ph.p_offset + offset) as usize]);
+                mem.write_byte(
+                    (ph.p_paddr + offset) as AddressType,
+                    bytes[(ph.p_offset + offset) as usize],
+                );
             }
         }
     }
