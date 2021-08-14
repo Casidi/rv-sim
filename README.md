@@ -38,8 +38,8 @@ lw         |        5 | :heavy_check_mark:
 auipc      |        4 | :heavy_check_mark:
 c.addiw    |        4 | :heavy_check_mark:
 beqz(beq)  |        4 | :heavy_check_mark:
-c.jalr     |        4 | next
-li         |        4 |
+c.jalr     |        4 | :heavy_check_mark:
+li         |        4 | next
 bne        |        4 | :heavy_check_mark:
 c.addi16sp |        4 |
 c.sub      |        3 | :heavy_check_mark:

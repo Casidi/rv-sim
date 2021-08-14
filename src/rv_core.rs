@@ -101,6 +101,7 @@ impl<'a> RVCore<'a> {
         match inst.id {
             InstID::C_J => {}
             InstID::C_JAL => {}
+            InstID::C_JALR => {}
             InstID::C_JR => {}
             InstID::C_BNEZ => {}
             InstID::C_BEQZ => {}
@@ -132,6 +133,7 @@ impl<'a> RVCore<'a> {
             InstID::C_BNEZ => self.inst_c_bnez(inst),
             InstID::C_J => self.inst_c_j(inst),
             InstID::C_JAL => self.inst_c_jal(inst),
+            InstID::C_JALR => self.inst_c_jalr(inst),
             InstID::C_JR => self.inst_c_jr(inst),
             InstID::C_SDSP => self.inst_c_sdsp(inst),
             InstID::C_SLLI => self.inst_c_slli(inst),
@@ -368,6 +370,12 @@ impl<'a> RVCore<'a> {
         offset |= ((imm >> 0) & 1) << 5;
 		let offset_with_sign = RVCore::sign_extend(offset, 12);
         self.pc = self.pc.wrapping_add(offset_with_sign);
+    }
+
+    fn inst_c_jalr(&mut self, inst: &inst_type::InstType) {
+		//print!(" {}", XRegisters::name(inst.get_rs1_cr()));
+        self.regs.write(1, self.pc + 2);
+		self.pc = self.regs.read(inst.get_rs1_cr());
     }
 
     fn inst_c_jal(&mut self, inst: &inst_type::InstType) {

@@ -83,6 +83,7 @@ impl InstDecoder {
                     match ((inst_bytes >> 12) & 1, (inst_bytes >> 2) & 0x1f) {
                         (0, 0) => inst.id = InstID::C_JR,
                         (0, _) => inst.id = InstID::C_MV,
+                        (1, 0) => inst.id = InstID::C_JALR,
                         (1, _) => inst.id = InstID::C_ADD,
                         (_, _) => self.dump_invalid_inst(inst),
                     }
