@@ -108,9 +108,10 @@ impl<'a> RVCore<'a> {
             InstID::JAL => {}
             InstID::JALR => {}
             InstID::BEQ => {}
+            InstID::BGEU => {}
             InstID::BLT => {}
             InstID::BLTU => {}
-            InstID::BGEU => {}
+            InstID::BNE => {}
             _ => self.pc += inst.len,
         }
     }
