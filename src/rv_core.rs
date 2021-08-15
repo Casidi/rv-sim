@@ -243,9 +243,10 @@ impl<'a> RVCore<'a> {
     }
 
     fn inst_andi(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
         self.regs.write(
             inst.get_rd(),
-            self.regs.read(inst.get_rs1()) & inst.get_imm_itype(),
+            self.regs.read(inst.get_rs1()) & imm,
         );
     }
 
