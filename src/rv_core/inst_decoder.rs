@@ -93,6 +93,7 @@ impl InstDecoder {
                     (1, _) => inst.id = InstID::C_ADD,
                     (_, _) => self.dump_invalid_inst(inst),
                 },
+                0x5 => inst.id = InstID::C_FSDSP,
                 0x6 => inst.id = InstID::C_SWSP,
                 0x7 => inst.id = InstID::C_SDSP,
                 _ => self.dump_invalid_inst(inst),
@@ -145,6 +146,9 @@ impl InstDecoder {
                 }
                 _ => self.dump_invalid_inst(inst),
             },
+            0x37 => {
+                inst.id = InstID::LUI;
+            }
             0x3b => match funct3 {
                 0x1 => {
                     let funct7 = (inst_bytes >> 25) & 0x7f;
