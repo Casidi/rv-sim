@@ -128,6 +128,7 @@ impl InstDecoder {
             }
             0x1b => match funct3 {
                 0x0 => inst.id = InstID::ADDIW,
+                0x1 => inst.id = InstID::SLLIW,
                 _ => self.dump_invalid_inst(inst),
             },
             0x23 => match funct3 {

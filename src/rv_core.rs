@@ -222,6 +222,7 @@ impl<'a> RVCore<'a> {
             InstID::SD => self.inst_sd(inst),
             InstID::SW => self.inst_sw(inst),
             InstID::SLLI => self.inst_slli(inst),
+            InstID::SLLIW => self.inst_slliw(inst),
             InstID::SLLW => self.inst_sllw(inst),
             InstID::SRLI => self.inst_srli(inst),
             InstID::SRAI => self.inst_srai(inst),
@@ -707,6 +708,12 @@ impl<'a> RVCore<'a> {
     }
 
     fn inst_slli(&mut self, inst: &inst_type::InstType) {
+        let shamt = inst.get_shamt_itype();
+        let rs1_val = self.regs.read(inst.get_rs1());
+        self.regs.write(inst.get_rd(), rs1_val << shamt);
+    }
+
+    fn inst_slliw(&mut self, inst: &inst_type::InstType) {
         let shamt = inst.get_shamt_itype();
         let rs1_val = self.regs.read(inst.get_rs1());
         self.regs.write(inst.get_rd(), rs1_val << shamt);
