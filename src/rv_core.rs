@@ -165,6 +165,7 @@ impl<'a> RVCore<'a> {
             InstID::JAL => {}
             InstID::JALR => {}
             InstID::BEQ => {}
+            InstID::BGE => {}
             InstID::BGEU => {}
             InstID::BLT => {}
             InstID::BLTU => {}
@@ -178,11 +179,13 @@ impl<'a> RVCore<'a> {
             InstID::AUIPC => self.inst_auipc(inst),
             InstID::ADDI => self.inst_addi(inst),
             InstID::ADDIW => self.inst_addiw(inst),
+            InstID::ADDW => self.inst_addw(inst),
             InstID::ANDI => self.inst_andi(inst),
             InstID::BEQ => self.inst_beq(inst),
             InstID::BLT => self.inst_blt(inst),
             InstID::BLTU => self.inst_bltu(inst),
             InstID::BGEU => self.inst_bgeu(inst),
+            InstID::BGE => self.inst_bge(inst),
             InstID::BNE => self.inst_bne(inst),
             InstID::C_ADD => self.inst_c_add(inst),
             InstID::C_ADDI => self.inst_c_addi(inst),
@@ -218,8 +221,10 @@ impl<'a> RVCore<'a> {
             InstID::LD => self.inst_ld(inst),
             InstID::LUI => self.inst_lui(inst),
             InstID::LW => self.inst_lw(inst),
+            InstID::MULW => self.inst_mulw(inst),
             InstID::SB => self.inst_sb(inst),
             InstID::SD => self.inst_sd(inst),
+            InstID::SH => self.inst_sh(inst),
             InstID::SW => self.inst_sw(inst),
             InstID::SLLI => self.inst_slli(inst),
             InstID::SLLIW => self.inst_slliw(inst),
@@ -301,6 +306,12 @@ impl<'a> RVCore<'a> {
         self.regs.write(inst.get_rd(), wdata);
     }
 
+    fn inst_addw(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        self.regs.write(inst.get_rd(), rs1_val + rs2_val);
+    }
+
     fn inst_andi(&mut self, inst: &inst_type::InstType) {
         let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
         self.regs.write(
@@ -352,6 +363,22 @@ impl<'a> RVCore<'a> {
         //print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
         //        XRegisters::name(inst.get_rs2_btype()), new_pc);
         if self.regs.read(inst.get_rs1()) < self.regs.read(inst.get_rs2_btype()) {
+            self.pc = new_pc;
+        } else {
+            self.pc += 4;
+        }
+    }
+
+    fn inst_bge(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_btype();
+        let offset = (((imm >> 11) & 1) << 12)
+            | (((imm >> 5) & 0x3f) << 5)
+            | (((imm >> 1) & 0xf) << 1)
+            | (((imm >> 0) & 1) << 11);
+        let new_pc = self.pc.wrapping_add(RVCore::sign_extend(offset, 12));
+        //print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
+        //        XRegisters::name(inst.get_rs2_btype()), new_pc);
+        if (self.regs.read(inst.get_rs1()) as i64) >= (self.regs.read(inst.get_rs2_btype()) as i64) {
             self.pc = new_pc;
         } else {
             self.pc += 4;
@@ -686,6 +713,12 @@ impl<'a> RVCore<'a> {
         );
     }
 
+    fn inst_mulw(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        self.regs.write(inst.get_rd(), rs1_val * rs2_val);
+    }
+
     fn inst_sb(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_stype();
         let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
@@ -697,6 +730,13 @@ impl<'a> RVCore<'a> {
         let imm = inst.get_imm_stype();
         let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
         let data = self.regs.read(inst.get_rs2_stype()) as u64;
+        self.write_memory(address, &data.to_le_bytes());
+    }
+
+    fn inst_sh(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_stype();
+        let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
+        let data = self.regs.read(inst.get_rs2_stype()) as u16;
         self.write_memory(address, &data.to_le_bytes());
     }
 
