@@ -192,6 +192,7 @@ impl<'a> RVCore<'a> {
             InstID::C_ADDIW => self.inst_c_addiw(inst),
             InstID::C_ADDI16SP => self.inst_c_addi16sp(inst),
             InstID::C_ADDI4SPN => self.inst_c_addi4spn(inst),
+            InstID::C_ADDW => self.inst_c_addw(inst),
             InstID::C_AND => self.inst_c_and(inst),
             InstID::C_ANDI => self.inst_c_andi(inst),
             InstID::C_BEQZ => self.inst_c_beqz(inst),
@@ -203,6 +204,7 @@ impl<'a> RVCore<'a> {
             InstID::C_JR => self.inst_c_jr(inst),
             InstID::C_SDSP => self.inst_c_sdsp(inst),
             InstID::C_SLLI => self.inst_c_slli(inst),
+            InstID::C_SRLI => self.inst_c_srli(inst),
             InstID::C_SW => self.inst_c_sw(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
             InstID::C_LD => self.inst_c_ld(inst),
@@ -463,6 +465,12 @@ impl<'a> RVCore<'a> {
         self.regs.write(inst.get_rd_ciw(), old_sp.wrapping_add(val));
     }
 
+    fn inst_c_addw(&mut self, inst: &inst_type::InstType) {
+        let a = self.regs.read(inst.get_rd_3b());
+        let b = self.regs.read(inst.get_rs2_3b());
+        self.regs.write(inst.get_rd_3b(), a.wrapping_add(b));
+    }
+
     fn inst_c_and(&mut self, inst: &inst_type::InstType) {
         let a = self.regs.read(inst.get_rd_3b());
         let b = self.regs.read(inst.get_rs2_3b());
@@ -565,6 +573,12 @@ impl<'a> RVCore<'a> {
         let imm = inst.get_imm_ci();
         let rd_val = self.regs.read(inst.get_rd());
         self.regs.write(inst.get_rd(), rd_val << imm);
+    }
+
+    fn inst_c_srli(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_ci();
+        let rd_val = self.regs.read(inst.get_rd_3b());
+        self.regs.write(inst.get_rd_3b(), rd_val >> imm);
     }
 
     fn inst_c_sw(&mut self, inst: &inst_type::InstType) {
