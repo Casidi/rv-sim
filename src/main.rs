@@ -20,17 +20,36 @@ fn main() {
     let mut mem = memory_model::MemoryModel::new();
 
     // Hack for hello world
-    core.regs.write(2, 0x3ffffffb50);
-    mem.write_byte(0x3ffffffb50, 0x1);
+    //core.regs.write(2, 0x3ffffffb50);
+    //mem.write_byte(0x3ffffffb50, 0x1);
 
     // Hack for coremark
     //core.regs.write(2, 0x3ffffffb40);
     //mem.write_byte(0x3ffffffb40, 0x1);
-
     let entry = load_elf(&mut mem, elf_path);
+    const reset_vec_size: u32 = 8;
+    let start_pc = entry;
+    let reset_vec: [u32; reset_vec_size as usize] = [
+        0x297,                                      // auipc  t0,0x0
+        0x28593 + (reset_vec_size * 4 << 20),       // addi   a1, t0, &dtb
+        0xf1402573,                                 // csrr   a0, mhartid
+        0x0182b283u32,                              // ld     t0,24(t0)
+        0x28067,                                    // jr     t0
+        0,
+        (start_pc & 0xffffffff) as u32,
+        (start_pc >> 32) as u32
+    ];
+
+    for i in 0..reset_vec.len() {
+        mem.write_byte((0x1000 + i*4) as u64, ((reset_vec[i] >> 0) & 0xff) as u8);
+        mem.write_byte((0x1000 + i*4 + 1) as u64, ((reset_vec[i] >> 8) & 0xff) as u8);
+        mem.write_byte((0x1000 + i*4 + 2) as u64, ((reset_vec[i] >> 16) & 0xff) as u8);
+        mem.write_byte((0x1000 + i*4 + 3) as u64, ((reset_vec[i] >> 24) & 0xff) as u8);
+    }
+
     core.bind_mem(&mut mem);
 
-    core.pc = entry;
+    core.pc = 0x1000;
 
     core.run(1000000);
 
