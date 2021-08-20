@@ -177,6 +177,7 @@ impl<'a> RVCore<'a> {
     fn execute(&mut self, inst: &inst_type::InstType) {
         match inst.id {
             InstID::AUIPC => self.inst_auipc(inst),
+            InstID::ADD => self.inst_add(inst),
             InstID::ADDI => self.inst_addi(inst),
             InstID::ADDIW => self.inst_addiw(inst),
             InstID::ADDW => self.inst_addw(inst),
@@ -224,17 +225,21 @@ impl<'a> RVCore<'a> {
             InstID::LUI => self.inst_lui(inst),
             InstID::LW => self.inst_lw(inst),
             InstID::MULW => self.inst_mulw(inst),
+            InstID::ORI => self.inst_ori(inst),
             InstID::SB => self.inst_sb(inst),
             InstID::SD => self.inst_sd(inst),
             InstID::SH => self.inst_sh(inst),
             InstID::SW => self.inst_sw(inst),
+            InstID::SLL => self.inst_sll(inst),
             InstID::SLLI => self.inst_slli(inst),
             InstID::SLLIW => self.inst_slliw(inst),
             InstID::SLLW => self.inst_sllw(inst),
             InstID::SRLI => self.inst_srli(inst),
             InstID::SRAI => self.inst_srai(inst),
+            InstID::SRAIW => self.inst_sraiw(inst),
             InstID::SUB => self.inst_sub(inst),
             InstID::NOP => self.inst_nop(inst),
+            InstID::XORI => self.inst_xori(inst),
             InstID::INVALID => panic!("Execute: invalid instruction"),
         }
     }
@@ -286,11 +291,16 @@ impl<'a> RVCore<'a> {
         (unsafe { std::mem::transmute::<[u8; 1], u8>(*data) }) as AddressType
     }
 
-    fn inst_nop(&mut self, _inst: &inst_type::InstType) {}
-
     fn inst_auipc(&mut self, inst: &inst_type::InstType) {
         self.regs
             .write(inst.get_rd(), self.pc + inst.get_imm_utype());
+    }
+
+    fn inst_add(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        self.regs
+            .write(inst.get_rd(), rs1_val.wrapping_add( rs2_val));
     }
 
     fn inst_addi(&mut self, inst: &inst_type::InstType) {
@@ -665,7 +675,7 @@ impl<'a> RVCore<'a> {
     }
 
     fn inst_ecall(&mut self, _inst: &inst_type::InstType) {
-        panic!("ECALL: Exceptions are not supported now");
+        //panic!("ECALL: Exceptions are not supported now");
     }
 
     fn inst_jal(&mut self, inst: &inst_type::InstType) {
@@ -713,7 +723,7 @@ impl<'a> RVCore<'a> {
 
     fn inst_lui(&mut self, inst: &inst_type::InstType) {
         self.regs
-            .write(inst.get_rd(), inst.get_imm_utype());
+            .write(inst.get_rd(), RVCore::sign_extend(inst.get_imm_utype(), 32));
     }
 
     fn inst_lw(&mut self, inst: &inst_type::InstType) {
@@ -731,6 +741,14 @@ impl<'a> RVCore<'a> {
         let rs1_val = self.regs.read(inst.get_rs1());
         let rs2_val = self.regs.read(inst.get_rs2_rtype());
         self.regs.write(inst.get_rd(), rs1_val * rs2_val);
+    }
+
+    fn inst_ori(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        self.regs.write(
+            inst.get_rd(),
+            self.regs.read(inst.get_rs1()) | imm,
+        );
     }
 
     fn inst_sb(&mut self, inst: &inst_type::InstType) {
@@ -759,6 +777,13 @@ impl<'a> RVCore<'a> {
         let address = self.regs.read(inst.get_rs1()) + (imm & 0xfff);
         let data = self.regs.read(inst.get_rs2_stype()) as u32;
         self.write_memory(address, &data.to_le_bytes());
+    }
+
+    fn inst_sll(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        self.regs
+            .write(inst.get_rd(), rs1_val << rs2_val);
     }
 
     fn inst_slli(&mut self, inst: &inst_type::InstType) {
@@ -792,11 +817,28 @@ impl<'a> RVCore<'a> {
             .write(inst.get_rd(), ((rs1_val as i64) >> shamt) as AddressType);
     }
 
+    fn inst_sraiw(&mut self, inst: &inst_type::InstType) {
+        let shamt = inst.get_shamt_itype() & 0x1f;
+        let rs1_val = self.regs.read(inst.get_rs1());
+        self.regs
+            .write(inst.get_rd(), ((rs1_val as i64) >> shamt) as AddressType);
+    }
+
     fn inst_sub(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self.regs.read(inst.get_rs1());
         let rs2_val = self.regs.read(inst.get_rs2_rtype());
         self.regs
             .write(inst.get_rd(), rs1_val.wrapping_sub(rs2_val));
+    }
+
+    fn inst_nop(&mut self, _inst: &inst_type::InstType) {}
+
+    fn inst_xori(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        self.regs.write(
+            inst.get_rd(),
+            self.regs.read(inst.get_rs1()) ^ imm,
+        );
     }
 }
 

@@ -2,6 +2,7 @@
 #[allow(non_camel_case_types)]
 pub enum InstID {
     AUIPC,
+    ADD,
     ADDI,
     ADDIW,
     ADDW,
@@ -49,17 +50,21 @@ pub enum InstID {
     LUI,
     LW,
     MULW,
+    ORI,
     SB,
     SD,
     SH,
     SW,
+    SLL,
     SLLI,
     SLLIW,
     SLLW,
     SRLI,
     SRAI,
+    SRAIW,
     SUB,
     NOP,
+    XORI,
     INVALID,
 }
 
@@ -70,6 +75,7 @@ pub struct InstInfo<'a> {
 #[allow(non_upper_case_globals)]
 pub const inst_info_table: &[InstInfo] = &[
     InstInfo { name: "auipc" },
+    InstInfo { name: "add" },
     InstInfo { name: "addi" },
     InstInfo { name: "addiw" },
     InstInfo { name: "addw" },
@@ -117,16 +123,20 @@ pub const inst_info_table: &[InstInfo] = &[
     InstInfo { name: "lui" },
     InstInfo { name: "lw" },
     InstInfo { name: "mulw" },
+    InstInfo { name: "ori" },
     InstInfo { name: "sb" },
     InstInfo { name: "sd" },
     InstInfo { name: "sh" },
     InstInfo { name: "sw" },
+    InstInfo { name: "sll" },
     InstInfo { name: "slli" },
     InstInfo { name: "slliw" },
     InstInfo { name: "sllw" },
     InstInfo { name: "srli" },
     InstInfo { name: "srai" },
+    InstInfo { name: "sraiw" },
     InstInfo { name: "sub" },
     InstInfo { name: "nop" },
+    InstInfo { name: "xori" },
     InstInfo { name: "invalid" },
 ];
