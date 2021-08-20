@@ -2,25 +2,19 @@ use crate::memory_interface::{MemoryInterface, MemoryOperation, Payload};
 use std::collections::HashMap;
 type AddressType = u64;
 
-pub struct MemoryModel {
-    data: HashMap<AddressType, [u8; 32]>,
+trait MemoryModelConfig {
+    const BLOCK_SIZE: usize = 32;
 }
+
+impl MemoryModelConfig for MemoryModel {}
+pub struct MemoryModel {
+    data: HashMap<AddressType, [u8; MemoryModel::BLOCK_SIZE]>,
+}
+
 
 impl MemoryInterface for MemoryModel {
     fn access_memory(&mut self, payload: &mut Payload) {
-        match payload.op {
-            MemoryOperation::READ => {
-                for i in 0..payload.data.len() {
-                    payload.data[i] = self.read_byte(payload.addr + i as AddressType);
-                }
-            }
-            MemoryOperation::WRITE => {
-                for i in 0..payload.data.len() {
-                    self.write_byte(payload.addr + i as AddressType, payload.data[i]);
-                }
-            }
-            MemoryOperation::INVALID => panic!("Invalid mem op"),
-        }
+        self.do_access(payload.addr, &mut payload.data, payload.op);
     }
 }
 
@@ -32,25 +26,61 @@ impl MemoryModel {
     }
 
     pub fn read_byte(&mut self, addr: AddressType) -> u8 {
-        let block_base = addr & (!(0x1f as AddressType));
-        let block_offset = addr - block_base;
-        if !self.data.contains_key(&block_base) {
-            self.data.insert(block_base, [0; 32]);
-        }
-
-        let block = self.data.get(&block_base).unwrap();
-        block[block_offset as usize]
+        let mut value = vec![0; 1];
+        self.do_access(addr, &mut value, MemoryOperation::READ);
+        value[0]
     }
 
     pub fn write_byte(&mut self, addr: AddressType, value: u8) {
-        let block_base = addr & (!(0x1f as AddressType));
-        let block_offset = addr - block_base;
-        if !self.data.contains_key(&block_base) {
-            self.data.insert(block_base, [0; 32]);
-        }
+        self.do_access(addr, &mut value.to_le_bytes().to_vec(), MemoryOperation::WRITE);
+    }
 
-        let block = self.data.get_mut(&block_base).unwrap();
-        block[block_offset as usize] = value;
+    pub fn write_word(&mut self, addr: AddressType, value: u32) {
+        self.do_access(addr, &mut value.to_le_bytes().to_vec(), MemoryOperation::WRITE);
+    }
+
+    fn do_access(&mut self, addr: AddressType, data: &mut Vec<u8>, op: MemoryOperation) {
+        match op {
+            MemoryOperation::READ => {
+                let mut data_offset: usize = 0;
+                while data_offset < data.len() {
+                    let block_base = (addr + data_offset as AddressType)
+                                        & (!(0x1f as AddressType));
+                    let mut block_offset: usize = (addr
+                                        + data_offset as AddressType - block_base) as usize;
+                    if !self.data.contains_key(&block_base) {
+                        self.data.insert(block_base, [0; MemoryModel::BLOCK_SIZE]);
+                    }
+
+                    let block = self.data.get(&block_base).unwrap();
+                    while (block_offset < block.len()) && (data_offset < data.len()) {
+                        data[data_offset] = block[block_offset as usize];
+                        block_offset += 1;
+                        data_offset += 1;
+                    }
+                }
+            }
+            MemoryOperation::WRITE => {
+                let mut data_offset: usize = 0;
+                while data_offset < data.len() {
+                    let block_base = (addr + data_offset as AddressType)
+                                        & (!(0x1f as AddressType));
+                    let mut block_offset: usize = (addr
+                                        + data_offset as AddressType - block_base) as usize;
+                    if !self.data.contains_key(&block_base) {
+                        self.data.insert(block_base, [0; MemoryModel::BLOCK_SIZE]);
+                    }
+
+                    let block = self.data.get_mut(&block_base).unwrap();
+                    while (block_offset < block.len()) && (data_offset < data.len()) {
+                        block[block_offset as usize] = data[data_offset];
+                        block_offset += 1;
+                        data_offset += 1;
+                    }
+                }
+            }
+            MemoryOperation::INVALID => panic!("Invalid mem op"),
+        }
     }
 }
 

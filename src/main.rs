@@ -41,10 +41,7 @@ fn main() {
     ];
 
     for i in 0..reset_vec.len() {
-        mem.write_byte((0x1000 + i*4) as u64, ((reset_vec[i] >> 0) & 0xff) as u8);
-        mem.write_byte((0x1000 + i*4 + 1) as u64, ((reset_vec[i] >> 8) & 0xff) as u8);
-        mem.write_byte((0x1000 + i*4 + 2) as u64, ((reset_vec[i] >> 16) & 0xff) as u8);
-        mem.write_byte((0x1000 + i*4 + 3) as u64, ((reset_vec[i] >> 24) & 0xff) as u8);
+        mem.write_word((0x1000 + i*4) as AddressType, reset_vec[i]);
     }
 
     core.bind_mem(&mut mem);
