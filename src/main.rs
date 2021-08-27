@@ -23,9 +23,6 @@ fn main() {
     //core.regs.write(2, 0x3ffffffb50);
     //mem.write_byte(0x3ffffffb50, 0x1);
 
-    // Hack for coremark
-    //core.regs.write(2, 0x3ffffffb40);
-    //mem.write_byte(0x3ffffffb40, 0x1);
     let entry = load_elf(&mut mem, elf_path);
     const reset_vec_size: u32 = 8;
     let start_pc = entry;
@@ -45,9 +42,7 @@ fn main() {
     }
 
     core.bind_mem(&mut mem);
-
     core.pc = 0x1000;
-
     core.run(1000000);
 
     //println!("Simulation ends");

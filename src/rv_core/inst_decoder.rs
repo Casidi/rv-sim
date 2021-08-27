@@ -176,6 +176,10 @@ impl InstDecoder {
                 }
                 _ => self.dump_invalid_inst(inst),
             },
+            0x53 => match funct3 {
+                0x0 => inst.id = InstID::FMV_W_X,
+                _ => self.dump_invalid_inst(inst),
+            },
             0x63 => match funct3 {
                 0x0 => inst.id = InstID::BEQ,
                 0x1 => inst.id = InstID::BNE,
@@ -187,7 +191,12 @@ impl InstDecoder {
             },
             0x67 => inst.id = InstID::JALR,
             0x6f => inst.id = InstID::JAL,
-            0x73 => inst.id = InstID::ECALL,
+            0x73 => match funct3 {
+                0x0 => inst.id = InstID::ECALL,
+                0x1 => inst.id = InstID::CSRRW,
+                0x2 => inst.id = InstID::CSRRS,
+                _ => self.dump_invalid_inst(inst),
+            }
             _ => self.dump_invalid_inst(inst),
         }
     }

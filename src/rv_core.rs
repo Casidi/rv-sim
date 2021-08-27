@@ -217,7 +217,10 @@ impl<'a> RVCore<'a> {
             InstID::C_MV => self.inst_c_mv(inst),
             InstID::C_SUB => self.inst_c_sub(inst),
             InstID::C_SD => self.inst_c_sd(inst),
+            InstID::CSRRS => self.inst_csrrs(inst),
+            InstID::CSRRW => self.inst_csrrw(inst),
             InstID::ECALL => self.inst_ecall(inst),
+            InstID::FMV_W_X => self.inst_fmv_w_x(inst),
             InstID::JAL => self.inst_jal(inst),
             InstID::JALR => self.inst_jalr(inst),
             InstID::LBU => self.inst_lbu(inst),
@@ -674,8 +677,26 @@ impl<'a> RVCore<'a> {
         self.regs.write(inst.get_rd_3b(), a.wrapping_sub(b));
     }
 
+    fn inst_csrrs(&mut self, inst: &inst_type::InstType) {
+        //let rd = inst.get_rd();
+        //let rs1 = inst.get_rs1();
+        //let csr = inst.get_csr();
+    }
+
+    fn inst_csrrw(&mut self, inst: &inst_type::InstType) {
+        //let rd = inst.get_rd();
+        //let rs1 = inst.get_rs1();
+        //let csr = inst.get_csr();
+    }
+
     fn inst_ecall(&mut self, _inst: &inst_type::InstType) {
         //panic!("ECALL: Exceptions are not supported now");
+    }
+
+    fn inst_fmv_w_x(&mut self, inst: &inst_type::InstType) {
+        let rs1 = inst.get_rs1();
+        let rs1_lower_val = self.regs.read(rs1) as u32;
+        self.fregs.write(inst.get_rd(), f32::from_le_bytes(rs1_lower_val.to_le_bytes()).into());
     }
 
     fn inst_jal(&mut self, inst: &inst_type::InstType) {
