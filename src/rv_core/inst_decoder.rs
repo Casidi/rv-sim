@@ -72,8 +72,10 @@ impl InstDecoder {
                         0x2 => inst.id = InstID::C_ANDI,
                         0x3 => match ((inst_bytes >> 12) & 1, (inst_bytes >> 5) & 0b11) {
                             (0, 0) => inst.id = InstID::C_SUB,
-                            (1, 1) => inst.id = InstID::C_ADDW,
+                            (0, 1) => inst.id = InstID::C_XOR,
+                            (0, 2) => inst.id = InstID::C_OR,
                             (0, 3) => inst.id = InstID::C_AND,
+                            (1, 1) => inst.id = InstID::C_ADDW,
                             (_, _) => self.dump_invalid_inst(inst),
                         },
                         _ => self.dump_invalid_inst(inst),
@@ -153,6 +155,7 @@ impl InstDecoder {
                     }
                 }
                 0x1 => inst.id = InstID::SLL,
+                0x6 => inst.id = InstID::OR,
                 _ => self.dump_invalid_inst(inst),
             },
             0x37 => {

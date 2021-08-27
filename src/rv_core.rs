@@ -203,6 +203,7 @@ impl<'a> RVCore<'a> {
             InstID::C_JAL => self.inst_c_jal(inst),
             InstID::C_JALR => self.inst_c_jalr(inst),
             InstID::C_JR => self.inst_c_jr(inst),
+            InstID::C_OR => self.inst_c_or(inst),
             InstID::C_SDSP => self.inst_c_sdsp(inst),
             InstID::C_SLLI => self.inst_c_slli(inst),
             InstID::C_SRLI => self.inst_c_srli(inst),
@@ -217,6 +218,7 @@ impl<'a> RVCore<'a> {
             InstID::C_MV => self.inst_c_mv(inst),
             InstID::C_SUB => self.inst_c_sub(inst),
             InstID::C_SD => self.inst_c_sd(inst),
+            InstID::C_XOR => self.inst_c_xor(inst),
             InstID::CSRRS => self.inst_csrrs(inst),
             InstID::CSRRW => self.inst_csrrw(inst),
             InstID::ECALL => self.inst_ecall(inst),
@@ -228,6 +230,7 @@ impl<'a> RVCore<'a> {
             InstID::LUI => self.inst_lui(inst),
             InstID::LW => self.inst_lw(inst),
             InstID::MULW => self.inst_mulw(inst),
+            InstID::OR => self.inst_or(inst),
             InstID::ORI => self.inst_ori(inst),
             InstID::SB => self.inst_sb(inst),
             InstID::SD => self.inst_sd(inst),
@@ -575,6 +578,12 @@ impl<'a> RVCore<'a> {
         self.pc = self.regs.read(inst.get_rs1_cr());
     }
 
+    fn inst_c_or(&mut self, inst: &inst_type::InstType) {
+        let a = self.regs.read(inst.get_rd_3b());
+        let b = self.regs.read(inst.get_rs2_3b());
+        self.regs.write(inst.get_rd_3b(), a | b);
+    }
+
     fn inst_c_sdsp(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_css();
         let address = self.regs.read(2) + (((imm & 0x7) << 6) | (imm & 0x38));
@@ -677,6 +686,12 @@ impl<'a> RVCore<'a> {
         self.regs.write(inst.get_rd_3b(), a.wrapping_sub(b));
     }
 
+    fn inst_c_xor(&mut self, inst: &inst_type::InstType) {
+        let a = self.regs.read(inst.get_rd_3b());
+        let b = self.regs.read(inst.get_rs2_3b());
+        self.regs.write(inst.get_rd_3b(), a ^ b);
+    }
+
     fn inst_csrrs(&mut self, inst: &inst_type::InstType) {
         //let rd = inst.get_rd();
         //let rs1 = inst.get_rs1();
@@ -762,6 +777,13 @@ impl<'a> RVCore<'a> {
         let rs1_val = self.regs.read(inst.get_rs1());
         let rs2_val = self.regs.read(inst.get_rs2_rtype());
         self.regs.write(inst.get_rd(), rs1_val * rs2_val);
+    }
+
+    fn inst_or(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        self.regs
+            .write(inst.get_rd(), rs1_val | rs2_val);
     }
 
     fn inst_ori(&mut self, inst: &inst_type::InstType) {
