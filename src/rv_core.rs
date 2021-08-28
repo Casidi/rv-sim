@@ -3,6 +3,7 @@ mod inst_info;
 mod inst_type;
 use crate::memory_interface::{MemoryInterface, MemoryOperation, Payload};
 use crate::rv_core::inst_info::InstID;
+use std::convert::TryInto;
 
 type AddressType = u64;
 
@@ -294,20 +295,14 @@ impl<'a> RVCore<'a> {
         self.mem_if = Some(mem_if);
     }
 
-    fn byte_array_to_addr_type(data: &[u8; 8]) -> AddressType {
-        unsafe {
-            std::mem::transmute::<[u8; std::mem::size_of::<AddressType>()], AddressType>(*data)
+    fn byte_array_to_addr_type(data: &[u8]) -> AddressType {
+        match data.len() {
+            8 => u64::from_le_bytes(data.try_into().unwrap()) as AddressType,
+            4 => u32::from_le_bytes(data.try_into().unwrap()) as AddressType,
+            2 => u16::from_le_bytes(data.try_into().unwrap()) as AddressType,
+            1 => u8::from_le_bytes(data.try_into().unwrap()) as AddressType,
+            _ => panic!("bad data length"),
         }
-    }
-
-    fn byte_array_to_addr_type_32b(data: &[u8; 4]) -> AddressType {
-        (unsafe { std::mem::transmute::<[u8; 4], u32>(*data) }) as AddressType
-    }
-    fn byte_array_to_addr_type_8b(data: &[u8; 1]) -> AddressType {
-        (unsafe { std::mem::transmute::<[u8; 1], u8>(*data) }) as AddressType
-    }
-    fn byte_array_to_addr_type_16b(data: &[u8; 2]) -> AddressType {
-        (unsafe { std::mem::transmute::<[u8; 2], u16>(*data) }) as AddressType
     }
 
     fn inst_auipc(&mut self, inst: &inst_type::InstType) {
@@ -659,7 +654,7 @@ impl<'a> RVCore<'a> {
         let mut data = [0; 4];
         self.read_memory(address, &mut data);
 
-        let result = RVCore::sign_extend(RVCore::byte_array_to_addr_type_32b(&data), 32);
+        let result = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
         self.regs.write(inst.get_rd_cl(), result);
     }
 
@@ -669,7 +664,7 @@ impl<'a> RVCore<'a> {
         let mut data = [0; 4];
         self.read_memory(address, &mut data);
         self.regs
-            .write(inst.get_rd(), RVCore::byte_array_to_addr_type_32b(&data));
+            .write(inst.get_rd(), RVCore::byte_array_to_addr_type(&data));
     }
 
     fn inst_c_li(&mut self, inst: &inst_type::InstType) {
@@ -798,7 +793,7 @@ impl<'a> RVCore<'a> {
         let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
         let mut data = [0; 1];
         self.read_memory(address, &mut data);
-        let wdata = RVCore::byte_array_to_addr_type_8b(&data);
+        let wdata = RVCore::byte_array_to_addr_type(&data);
         self.regs.write(inst.get_rd(), wdata);
     }
 
@@ -816,7 +811,7 @@ impl<'a> RVCore<'a> {
         let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
         let mut data = [0; 2];
         self.read_memory(address, &mut data);
-        let wdata = RVCore::byte_array_to_addr_type_16b(&data);
+        let wdata = RVCore::byte_array_to_addr_type(&data);
         self.regs.write(inst.get_rd(), wdata);
     }
 
@@ -832,7 +827,7 @@ impl<'a> RVCore<'a> {
         self.read_memory(address, &mut data);
         self.regs.write(
             inst.get_rd(),
-            RVCore::byte_array_to_addr_type_32b(&data) as AddressType,
+            RVCore::byte_array_to_addr_type(&data),
         );
     }
 
