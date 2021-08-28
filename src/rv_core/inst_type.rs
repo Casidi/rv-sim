@@ -107,6 +107,10 @@ impl InstType {
     pub fn get_imm_ciw(&self) -> AddressType {
         (self.data >> 5) & 0xff
     }
+
+    pub fn get_csr(&self) -> AddressType {
+        (self.data >> 20) & 0xfff
+    }
 }
 
 #[cfg(test)]

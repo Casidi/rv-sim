@@ -20,6 +20,7 @@ A RISC-V instruction-accurate simulator
 - [ ] Pass [riscv-tests](https://github.com/riscv/riscv-tests)
 
 ## Reference Materials
+- [The usage of fromhost and tohost symbols in ELF](https://github.com/riscv/riscv-isa-sim/issues/364)
 - [BOOM workshop](https://riscv.org/wp-content/uploads/2016/01/Wed1345-RISCV-Workshop-3-BOOM.pdf)
 - [RTL commit log](https://docs.boom-core.org/en/latest/sections/parameterization.html)
 - Spike commit log:```../configure --enable-commitlog```

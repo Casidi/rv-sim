@@ -75,6 +75,7 @@ impl InstDecoder {
                             (0, 1) => inst.id = InstID::C_XOR,
                             (0, 2) => inst.id = InstID::C_OR,
                             (0, 3) => inst.id = InstID::C_AND,
+                            (1, 0) => inst.id = InstID::C_SUBW,
                             (1, 1) => inst.id = InstID::C_ADDW,
                             (_, _) => self.dump_invalid_inst(inst),
                         },
@@ -114,11 +115,14 @@ impl InstDecoder {
                 0x2 => inst.id = InstID::LW,
                 0x3 => inst.id = InstID::LD,
                 0x4 => inst.id = InstID::LBU,
+                0x5 => inst.id = InstID::LHU,
                 _ => self.dump_invalid_inst(inst),
             },
+            0x0f => inst.id = InstID::FENCE,
             0x13 => match funct3 {
                 0x0 => inst.id = InstID::ADDI,
                 0x1 => inst.id = InstID::SLLI,
+                0x3 => inst.id = InstID::SLTIU,
                 0x4 => inst.id = InstID::XORI,
                 0x5 => match (inst_bytes >> 25) & 0x7f {
                     0x0 => inst.id = InstID::SRLI,
@@ -150,12 +154,16 @@ impl InstDecoder {
                     let funct7 = (inst_bytes >> 25) & 0x7f;
                     match funct7 {
                         0x0 => inst.id = InstID::ADD,
+                        0x1 => inst.id = InstID::MUL,
                         0x20 => inst.id = InstID::SUB,
                         _ => self.dump_invalid_inst(inst),
                     }
                 }
                 0x1 => inst.id = InstID::SLL,
+                0x4 => inst.id = InstID::DIV,
+                0x5 => inst.id = InstID::DIVU,
                 0x6 => inst.id = InstID::OR,
+                0x7 => inst.id = InstID::REMU,
                 _ => self.dump_invalid_inst(inst),
             },
             0x37 => {
@@ -167,6 +175,7 @@ impl InstDecoder {
                     match funct7 {
                         0x0 => inst.id = InstID::ADDW,
                         0x1 => inst.id = InstID::MULW,
+                        0x20 => inst.id = InstID::SUBW,
                         _ => self.dump_invalid_inst(inst),
                     }
                 }
@@ -177,6 +186,7 @@ impl InstDecoder {
                         _ => self.dump_invalid_inst(inst),
                     }
                 }
+                0x4 => inst.id = InstID::DIVW,
                 _ => self.dump_invalid_inst(inst),
             },
             0x53 => match funct3 {
