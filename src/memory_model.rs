@@ -1,5 +1,8 @@
 use crate::memory_interface::{MemoryInterface, MemoryOperation, Payload};
 use std::collections::HashMap;
+//use std::convert::TryFrom;
+use std::convert::TryInto;
+
 type AddressType = u64;
 
 trait MemoryModelConfig {
@@ -15,6 +18,10 @@ pub struct MemoryModel {
 impl MemoryInterface for MemoryModel {
     fn access_memory(&mut self, payload: &mut Payload) {
         self.do_access(payload.addr, &mut payload.data, payload.op);
+        /*if payload.addr == 0x80025c80 && payload.op == MemoryOperation::WRITE {
+            println!("\nJC_DEBUG: Write to 0x80025c80, val = {:#04x}", payload.data[0]);
+        }
+*/
     }
 }
 
@@ -37,6 +44,12 @@ impl MemoryModel {
 
     pub fn write_word(&mut self, addr: AddressType, value: u32) {
         self.do_access(addr, &mut value.to_le_bytes().to_vec(), MemoryOperation::WRITE);
+    }
+
+    pub fn read_word(&mut self, addr: AddressType) -> u32 {
+        let mut val = vec![0; 4];
+        self.do_access(addr, &mut val, MemoryOperation::READ);
+        u32::from_le_bytes(val.try_into().unwrap())
     }
 
     fn do_access(&mut self, addr: AddressType, data: &mut Vec<u8>, op: MemoryOperation) {

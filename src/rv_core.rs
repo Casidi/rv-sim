@@ -2,8 +2,11 @@ mod inst_decoder;
 mod inst_info;
 mod inst_type;
 use crate::memory_interface::{MemoryInterface, MemoryOperation, Payload};
+use crate::memory_model::{MemoryModel};
 use crate::rv_core::inst_info::InstID;
 use std::convert::TryInto;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 type AddressType = u64;
 
@@ -115,22 +118,24 @@ impl FRegisters {
     }
 }
 
-pub struct RVCore<'a> {
+pub struct RVCore {
     pub pc: AddressType,
     pub regs: XRegisters,
     pub fregs: FRegisters,
     id_instance: inst_decoder::InstDecoder,
-    mem_if: Option<&'a mut dyn MemoryInterface>,
+    mem_if: Option<Rc<RefCell<MemoryModel>>>,
+    inst_count: u64,
 }
 
-impl<'a> RVCore<'a> {
-    pub fn new() -> RVCore<'a> {
+impl RVCore {
+    pub fn new() -> RVCore {
         RVCore {
             pc: 0,
             regs: XRegisters { reg_bank: [0; 32] },
             fregs: FRegisters { reg_bank: [0.0; 32] },
             id_instance: inst_decoder::InstDecoder::new(),
             mem_if: None,
+            inst_count: 0,
         }
     }
 
@@ -173,6 +178,8 @@ impl<'a> RVCore<'a> {
             InstID::BNE => {}
             _ => self.pc += inst.len,
         }
+
+        self.inst_count += 1;
     }
 
     fn execute(&mut self, inst: &inst_type::InstType) {
@@ -275,7 +282,7 @@ impl<'a> RVCore<'a> {
             data: data.to_vec(),
             op: MemoryOperation::WRITE,
         };
-        self.mem_if.as_mut().unwrap().access_memory(&mut payload);
+        self.mem_if.as_mut().unwrap().borrow_mut().access_memory(&mut payload);
     }
 
     fn read_memory(&mut self, address: AddressType, data: &mut [u8]) {
@@ -284,14 +291,14 @@ impl<'a> RVCore<'a> {
             data: data.to_vec(),
             op: MemoryOperation::READ,
         };
-        self.mem_if.as_mut().unwrap().access_memory(&mut payload);
+        self.mem_if.as_mut().unwrap().borrow_mut().access_memory(&mut payload);
 
         for i in 0..data.len() {
             data[i] = payload.data[i];
         }
     }
 
-    pub fn bind_mem(&mut self, mem_if: &'a mut dyn MemoryInterface) {
+    pub fn bind_mem(&mut self, mem_if: Rc<RefCell<MemoryModel>>) {
         self.mem_if = Some(mem_if);
     }
 
@@ -715,21 +722,29 @@ impl<'a> RVCore<'a> {
         let csr = inst.get_csr();
         if csr == 0xb00 {
             // mcycle
-            if self.pc == 0x80002c22 {
+            /*if self.pc == 0x80002c22 {
                 self.regs.write(rd, 0x2f2b6);
             } else {
                 self.regs.write(rd, 0x2b2);
-            }
+            }*/
+            self.regs.write(rd, self.inst_count);
         } else if csr == 0xb02 {
             // minstret
-            self.regs.write(rd, 0x2b7);
+            //self.regs.write(rd, 0x2b7);
+            self.regs.write(rd, self.inst_count);
+        } else if csr == 0xf14 {
+            // mhartid
+            self.regs.write(rd, 0x0);
+        } else {
+            self.regs.write(rd, AddressType::max_value());
         }
     }
 
     fn inst_csrrw(&mut self, inst: &inst_type::InstType) {
-        //let rd = inst.get_rd();
+        let rd = inst.get_rd();
         //let rs1 = inst.get_rs1();
         //let csr = inst.get_csr();
+        self.regs.write(rd, AddressType::max_value());
     }
 
     fn inst_div(&mut self, inst: &inst_type::InstType) {

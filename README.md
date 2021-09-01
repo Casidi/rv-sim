@@ -9,6 +9,7 @@ A RISC-V instruction-accurate simulator
 - [x] Encapsulate integer registers into a struct, use read/write API to access
 - [x] Implement one RV64I instruction and reserve the flexibility for 64-bit mode (ex. ADDIW)
 - [x] (49/49) Able to run hello world program (empty main only), match pctrace to Spike
+- [x] Able to run dhrystone, match pctrace to Spike
 - [ ] (/) Able to run coremark, match pctrace to Spike
     - RV porting of cormark: [riscv-coremark](https://github.com/riscv-boom/riscv-coremark)
 - [ ] (/) Test with random program (csmith or yarpgen), match pctrace to Spike
@@ -18,6 +19,10 @@ A RISC-V instruction-accurate simulator
 - [ ] (4/15) Support all RV64I instructions
 - [ ] (25/49) Support all RVC instructions
 - [ ] Pass [riscv-tests](https://github.com/riscv/riscv-tests)
+
+## Trace how Spike handle fromhost/tohost
+- Check fromhost/tohost every INTERLEAVE(5000) instructions
+- Need to check the memory every 5000 cycles and write if necessary
 
 ## Reference Materials
 - [The usage of fromhost and tohost symbols in ELF](https://github.com/riscv/riscv-isa-sim/issues/364)
