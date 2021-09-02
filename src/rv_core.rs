@@ -15,7 +15,7 @@ pub struct XRegisters {
 }
 
 impl XRegisters {
-    fn read(&self, i: usize) -> AddressType {
+    pub fn read(&self, i: usize) -> AddressType {
         self.reg_bank[i]
     }
 
@@ -125,6 +125,7 @@ pub struct RVCore {
     id_instance: inst_decoder::InstDecoder,
     mem_if: Option<Rc<RefCell<MemoryModel>>>,
     inst_count: u64,
+    mtvec: u64,
 }
 
 impl RVCore {
@@ -136,6 +137,7 @@ impl RVCore {
             id_instance: inst_decoder::InstDecoder::new(),
             mem_if: None,
             inst_count: 0,
+            mtvec: 0,
         }
     }
 
@@ -230,6 +232,7 @@ impl RVCore {
             InstID::C_XOR => self.inst_c_xor(inst),
             InstID::CSRRS => self.inst_csrrs(inst),
             InstID::CSRRW => self.inst_csrrw(inst),
+            InstID::CSRRWI => self.inst_csrrwi(inst),
             InstID::DIV => self.inst_div(inst),
             InstID::DIVU => self.inst_divu(inst),
             InstID::DIVW => self.inst_divw(inst),
@@ -245,6 +248,7 @@ impl RVCore {
             InstID::LW => self.inst_lw(inst),
             InstID::MUL => self.inst_mul(inst),
             InstID::MULW => self.inst_mulw(inst),
+            InstID::MRET => self.inst_mret(inst),
             InstID::OR => self.inst_or(inst),
             InstID::ORI => self.inst_ori(inst),
             InstID::REMU => self.inst_remu(inst),
@@ -335,7 +339,9 @@ impl RVCore {
 
     fn inst_addiw(&mut self, inst: &inst_type::InstType) {
         let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
-        let wdata = self.regs.read(inst.get_rs1()).wrapping_add(imm);
+        let mut wdata = self.regs.read(inst.get_rs1()).wrapping_add(imm);
+        wdata = wdata as u32 as AddressType;
+        wdata = RVCore::sign_extend(wdata, 32);
         self.regs.write(inst.get_rd(), wdata);
     }
 
@@ -735,6 +741,9 @@ impl RVCore {
         } else if csr == 0xf14 {
             // mhartid
             self.regs.write(rd, 0x0);
+        } else if csr == 0x342 {
+            // mcause
+            self.regs.write(rd, 0x8);
         } else {
             self.regs.write(rd, AddressType::max_value());
         }
@@ -742,9 +751,19 @@ impl RVCore {
 
     fn inst_csrrw(&mut self, inst: &inst_type::InstType) {
         let rd = inst.get_rd();
+        let rs1 = inst.get_rs1();
+        let csr = inst.get_csr();
+        //self.regs.write(rd, AddressType::max_value());
+        if csr == 0x305 {
+            self.regs.write(rd, self.mtvec);
+            self.mtvec = self.regs.read(rs1);
+        }
+    }
+
+    fn inst_csrrwi(&mut self, inst: &inst_type::InstType) {
+        //let rd = inst.get_rd();
         //let rs1 = inst.get_rs1();
         //let csr = inst.get_csr();
-        self.regs.write(rd, AddressType::max_value());
     }
 
     fn inst_div(&mut self, inst: &inst_type::InstType) {
@@ -766,6 +785,8 @@ impl RVCore {
     }
 
     fn inst_ecall(&mut self, _inst: &inst_type::InstType) {
+        self.pc = self.mtvec;
+        self.pc -= 4;
         //panic!("ECALL: Exceptions are not supported now");
     }
 
@@ -858,6 +879,9 @@ impl RVCore {
         self.regs.write(inst.get_rd(), rs1_val * rs2_val);
     }
 
+    fn inst_mret(&mut self, inst: &inst_type::InstType) {
+    }
+
     fn inst_or(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self.regs.read(inst.get_rs1());
         let rs2_val = self.regs.read(inst.get_rs2_rtype());
@@ -915,7 +939,7 @@ impl RVCore {
     }
 
     fn inst_slli(&mut self, inst: &inst_type::InstType) {
-        let shamt = inst.get_shamt_itype();
+        let shamt = inst.get_imm_itype();
         let rs1_val = self.regs.read(inst.get_rs1());
         self.regs.write(inst.get_rd(), rs1_val << shamt);
     }

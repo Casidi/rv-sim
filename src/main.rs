@@ -53,6 +53,13 @@ fn main() {
         if tohost != 0 {
             if (tohost & 1) == 1 {
                 // End simulation
+                let test_result = core.regs.read(10);
+                if test_result == 0 {
+                    println!("RISCV_TEST_PASS");
+                } else {
+                    println!("RISCV_TEST_FAIL");
+                }
+
                 break;
             } else {
                 let sys_write_len = mem.as_mut().unwrap().borrow_mut().read_word(tohost + 24) as u64;
