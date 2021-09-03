@@ -113,10 +113,12 @@ impl InstDecoder {
         match opcode {
             0x3 => match funct3 {
                 0x0 => inst.id = InstID::LB,
+                0x1 => inst.id = InstID::LH,
                 0x2 => inst.id = InstID::LW,
                 0x3 => inst.id = InstID::LD,
                 0x4 => inst.id = InstID::LBU,
                 0x5 => inst.id = InstID::LHU,
+                0x6 => inst.id = InstID::LWU,
                 _ => self.dump_invalid_inst(inst),
             },
             0x0f => inst.id = InstID::FENCE,

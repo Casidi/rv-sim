@@ -19,13 +19,13 @@ fn main() {
     let elf_path = &args[1];
 
     let mut core: rv_core::RVCore = rv_core::RVCore::new();
-    let mut mem = Some(Rc::new(RefCell::new(memory_model::MemoryModel::new())));
+    let mut mem = Rc::new(RefCell::new(memory_model::MemoryModel::new()));
 
     // Hack for hello world
     //core.regs.write(2, 0x3ffffffb50);
     //mem.write_byte(0x3ffffffb50, 0x1);
 
-    let entry = load_elf(&mut mem.as_mut().unwrap().borrow_mut(), elf_path);
+    let entry = load_elf(&mut mem.borrow_mut(), elf_path);
     const reset_vec_size: u32 = 8;
     let start_pc = entry;
     let reset_vec: [u32; reset_vec_size as usize] = [
@@ -40,16 +40,15 @@ fn main() {
     ];
 
     for i in 0..reset_vec.len() {
-        mem.as_mut().unwrap().borrow_mut().write_word((0x1000 + i*4) as AddressType, reset_vec[i]);
+        mem.borrow_mut().write_word((0x1000 + i*4) as AddressType, reset_vec[i]);
     }
 
-    //let mut mut_mem = mem.as_mut().unwrap().borrow_mut();
-    core.bind_mem(mem.as_mut().unwrap().clone());
+    core.bind_mem(mem.clone());
     core.pc = 0x1000;
 
     for i in 0..50 {
         core.run(5000);
-        let tohost = mem.as_mut().unwrap().borrow_mut().read_word(0x80001000) as u64;
+        let tohost = mem.borrow_mut().read_word(0x80001000) as u64;
         if tohost != 0 {
             if (tohost & 1) == 1 {
                 // End simulation
@@ -62,10 +61,10 @@ fn main() {
 
                 break;
             } else {
-                let sys_write_len = mem.as_mut().unwrap().borrow_mut().read_word(tohost + 24) as u64;
-                mem.as_mut().unwrap().borrow_mut().write_word(tohost, sys_write_len as u32);
-                mem.as_mut().unwrap().borrow_mut().write_word(0x80001000, 0);
-                mem.as_mut().unwrap().borrow_mut().write_word(0x80001040, 1);
+                let sys_write_len = mem.borrow_mut().read_word(tohost + 24) as u64;
+                mem.borrow_mut().write_word(tohost, sys_write_len as u32);
+                mem.borrow_mut().write_word(0x80001000, 0);
+                mem.borrow_mut().write_word(0x80001040, 1);
             }
         }
     }

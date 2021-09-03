@@ -245,9 +245,11 @@ impl RVCore {
             InstID::LB => self.inst_lb(inst),
             InstID::LBU => self.inst_lbu(inst),
             InstID::LD => self.inst_ld(inst),
+            InstID::LH => self.inst_lh(inst),
             InstID::LHU => self.inst_lhu(inst),
             InstID::LUI => self.inst_lui(inst),
             InstID::LW => self.inst_lw(inst),
+            InstID::LWU => self.inst_lwu(inst),
             InstID::MUL => self.inst_mul(inst),
             InstID::MULW => self.inst_mulw(inst),
             InstID::MRET => self.inst_mret(inst),
@@ -863,6 +865,17 @@ impl RVCore {
         self.regs.write(inst.get_rd(), wdata);
     }
 
+    fn inst_lh(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
+        let mut data = [0; 2];
+        self.read_memory(address, &mut data);
+        self.regs.write(
+            inst.get_rd(),
+            RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 16),
+        );
+    }
+
     fn inst_lhu(&mut self, inst: &inst_type::InstType) {
         let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
         let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
@@ -885,6 +898,17 @@ impl RVCore {
         self.regs.write(
             inst.get_rd(),
             RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32),
+        );
+    }
+
+    fn inst_lwu(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
+        let mut data = [0; 4];
+        self.read_memory(address, &mut data);
+        self.regs.write(
+            inst.get_rd(),
+            RVCore::byte_array_to_addr_type(&data),
         );
     }
 

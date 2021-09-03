@@ -60,7 +60,9 @@ for test_path in test_paths:
     if rvsim_output.find(b'RISCV_TEST_PASS') != -1:
         pass_count += 1
         print('Pass')
+    elif rvsim_output.find(b'RISCV_TEST_FAIL') != -1:
+        print('Fail normal')
     else:
-        print('Fail')
+        print('Fail crash')
 
 print(f'Summary: {pass_count} out of {len(test_paths)} tests passed')
