@@ -41,6 +41,17 @@ A RISC-V instruction-accurate simulator
     -   magic_mem[0] = syscall number when input, after handling syscall, return value is written to here
     -   magic_mem[3] = write length for sys_write
 
+## Build riscv-tests
+```bash
+export PATH=$PATH:<riscv-toolchain-path>/bin
+git clone https://github.com/riscv/riscv-tests
+cd riscv-tests
+git submodule update --init --recursive
+autoconf
+./configure
+make
+```
+
 ## Reference Materials
 - [The usage of fromhost and tohost symbols in ELF](https://github.com/riscv/riscv-isa-sim/issues/364)
 - [BOOM workshop](https://riscv.org/wp-content/uploads/2016/01/Wed1345-RISCV-Workshop-3-BOOM.pdf)
