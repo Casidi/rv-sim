@@ -1,5 +1,3 @@
-type AddressType = u64;
-
 pub struct FRegisters {
     reg_bank: [f64; 32],
 }

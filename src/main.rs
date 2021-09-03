@@ -19,18 +19,18 @@ fn main() {
     let elf_path = &args[1];
 
     let mut core: rv_core::RVCore = rv_core::RVCore::new();
-    let mut mem = Rc::new(RefCell::new(memory_model::MemoryModel::new()));
+    let mem = Rc::new(RefCell::new(memory_model::MemoryModel::new()));
 
     // Hack for hello world
     //core.regs.write(2, 0x3ffffffb50);
     //mem.write_byte(0x3ffffffb50, 0x1);
 
     let entry = load_elf(&mut mem.borrow_mut(), elf_path);
-    const reset_vec_size: u32 = 8;
+    const RESET_VEC_SIZE: u32 = 8;
     let start_pc = entry;
-    let reset_vec: [u32; reset_vec_size as usize] = [
+    let reset_vec: [u32; RESET_VEC_SIZE as usize] = [
         0x297,                                      // auipc  t0,0x0
-        0x28593 + (reset_vec_size * 4 << 20),       // addi   a1, t0, &dtb
+        0x28593 + (RESET_VEC_SIZE * 4 << 20),       // addi   a1, t0, &dtb
         0xf1402573,                                 // csrr   a0, mhartid
         0x0182b283u32,                              // ld     t0,24(t0)
         0x28067,                                    // jr     t0
@@ -43,10 +43,11 @@ fn main() {
         mem.borrow_mut().write_word((0x1000 + i*4) as AddressType, reset_vec[i]);
     }
 
-    core.bind_mem(mem.clone());
+    let mem_if: Rc<RefCell<memory_interface::MemoryInterface>> = mem.clone();
+    core.bind_mem(mem_if.clone());
     core.pc = 0x1000;
 
-    for i in 0..50 {
+    for _i in 0..50 {
         core.run(5000);
         let tohost = mem.borrow_mut().read_word(0x80001000) as u64;
         if tohost != 0 {
@@ -87,7 +88,7 @@ fn load_elf(mem: &mut memory_model::MemoryModel, path: &str) -> AddressType {
     }
 
     for sym in elf.syms.iter() {
-        let name = (elf.strtab.get(sym.st_name)).unwrap().unwrap();
+        let name = (elf.strtab.get_at(sym.st_name)).unwrap();
         if name == "tohost" {
             //println!("{}: {:#010x}", name, sym.st_value);
         } else if name == "fromhost" {
