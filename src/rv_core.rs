@@ -1,6 +1,8 @@
 mod inst_decoder;
 mod inst_info;
 mod inst_type;
+mod xregs;
+mod fregs;
 use crate::memory_interface::{MemoryInterface, MemoryOperation, Payload};
 use crate::memory_model::{MemoryModel};
 use crate::rv_core::inst_info::InstID;
@@ -10,118 +12,10 @@ use std::cell::RefCell;
 
 type AddressType = u64;
 
-pub struct XRegisters {
-    reg_bank: [AddressType; 32],
-}
-
-impl XRegisters {
-    pub fn read(&self, i: usize) -> AddressType {
-        self.reg_bank[i]
-    }
-
-    pub fn write(&mut self, i: usize, val: AddressType) {
-        if i != 0 {
-            self.reg_bank[i] = val;
-        }
-    }
-
-    fn name(i: usize) -> &'static str {
-        match i {
-            0 => "zero",
-            1 => "ra",
-            2 => "sp",
-            3 => "gp",
-            4 => "tp",
-            5 => "t0",
-            6 => "t1",
-            7 => "t2",
-            8 => "s0",
-            9 => "s1",
-            10 => "a0",
-            11 => "a1",
-            12 => "a2",
-            13 => "a3",
-            14 => "a4",
-            15 => "a5",
-            16 => "a6",
-            17 => "a7",
-            18 => "s2",
-            19 => "s3",
-            20 => "s4",
-            21 => "s5",
-            22 => "s6",
-            23 => "s7",
-            24 => "s8",
-            25 => "s9",
-            26 => "s10",
-            27 => "s11",
-            28 => "t3",
-            29 => "t4",
-            30 => "t5",
-            31 => "t6",
-            _ => "invalid gpr name",
-        }
-    }
-}
-
-pub struct FRegisters {
-    reg_bank: [f64; 32],
-}
-
-impl FRegisters {
-    fn read(&self, i: usize) -> f64 {
-        self.reg_bank[i]
-    }
-
-    pub fn write(&mut self, i: usize, val: f64) {
-        if i != 0 {
-            self.reg_bank[i] = val;
-        }
-    }
-
-    fn name(i: usize) -> &'static str {
-        match i {
-            0 => "ft0",
-            1 => "ft1",
-            2 => "ft2",
-            3 => "ft3",
-            4 => "ft4",
-            5 => "ft5",
-            6 => "ft6",
-            7 => "ft7",
-            8 => "fs0",
-            9 => "fs1",
-            10 => "fa0",
-            11 => "fa1",
-            12 => "fa2",
-            13 => "fa3",
-            14 => "fa4",
-            15 => "fa5",
-            16 => "fa6",
-            17 => "fa7",
-            18 => "fs2",
-            19 => "fs3",
-            20 => "fs4",
-            21 => "fs5",
-            22 => "fs6",
-            23 => "fs7",
-            24 => "fs8",
-            25 => "fs9",
-            26 => "fs10",
-            27 => "fs11",
-            28 => "ft8",
-            29 => "ft9",
-            30 => "ft10",
-            31 => "ft11",
-            _ => "inalid fpr name",
-        }
-    }
-}
-
 pub struct RVCore {
     pub pc: AddressType,
-    pub regs: XRegisters,
-    pub fregs: FRegisters,
+    pub regs: xregs::XRegisters,
+    pub fregs: fregs::FRegisters,
     id_instance: inst_decoder::InstDecoder,
     mem_if: Option<Rc<RefCell<MemoryModel>>>,
     inst_count: u64,
@@ -132,8 +26,8 @@ impl RVCore {
     pub fn new() -> RVCore {
         RVCore {
             pc: 0,
-            regs: XRegisters { reg_bank: [0; 32] },
-            fregs: FRegisters { reg_bank: [0.0; 32] },
+            regs: xregs::XRegisters::new(),
+            fregs: fregs::FRegisters::new(),
             id_instance: inst_decoder::InstDecoder::new(),
             mem_if: None,
             inst_count: 0,
@@ -160,26 +54,10 @@ impl RVCore {
         for i in 0..32 {
             print!(", r{}={:08x}", i, self.regs.read(i));
         }
+        println!("");
 
         self.execute(&inst);
-        println!("");
-        match inst.id {
-            InstID::C_J => {}
-            InstID::C_JAL => {}
-            InstID::C_JALR => {}
-            InstID::C_JR => {}
-            InstID::C_BNEZ => {}
-            InstID::C_BEQZ => {}
-            InstID::JAL => {}
-            InstID::JALR => {}
-            InstID::BEQ => {}
-            InstID::BGE => {}
-            InstID::BGEU => {}
-            InstID::BLT => {}
-            InstID::BLTU => {}
-            InstID::BNE => {}
-            _ => self.pc += inst.len,
-        }
+        self.pc += inst.len;
 
         self.inst_count += 1;
     }
@@ -382,9 +260,7 @@ impl RVCore {
         //        XRegisters::name(inst.get_rs2_btype()), new_pc);
         if (self.regs.read(inst.get_rs1()) as i64) == (self.regs.read(inst.get_rs2_btype()) as i64)
         {
-            self.pc = new_pc;
-        } else {
-            self.pc += 4;
+            self.pc = new_pc - inst.len;
         }
     }
 
@@ -398,9 +274,7 @@ impl RVCore {
         //print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
         //        XRegisters::name(inst.get_rs2_btype()), new_pc);
         if (self.regs.read(inst.get_rs1()) as i64) < (self.regs.read(inst.get_rs2_btype()) as i64) {
-            self.pc = new_pc;
-        } else {
-            self.pc += 4;
+            self.pc = new_pc - inst.len;
         }
     }
 
@@ -414,9 +288,7 @@ impl RVCore {
         //print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
         //        XRegisters::name(inst.get_rs2_btype()), new_pc);
         if self.regs.read(inst.get_rs1()) < self.regs.read(inst.get_rs2_btype()) {
-            self.pc = new_pc;
-        } else {
-            self.pc += 4;
+            self.pc = new_pc - inst.len;
         }
     }
 
@@ -430,9 +302,7 @@ impl RVCore {
         //print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
         //        XRegisters::name(inst.get_rs2_btype()), new_pc);
         if (self.regs.read(inst.get_rs1()) as i64) >= (self.regs.read(inst.get_rs2_btype()) as i64) {
-            self.pc = new_pc;
-        } else {
-            self.pc += 4;
+            self.pc = new_pc - inst.len;
         }
     }
 
@@ -446,9 +316,7 @@ impl RVCore {
         //print!(" {},{},{:x}", XRegisters::name(inst.get_rs1()),
         //        XRegisters::name(inst.get_rs2_btype()), new_pc);
         if self.regs.read(inst.get_rs1()) >= self.regs.read(inst.get_rs2_btype()) {
-            self.pc = new_pc;
-        } else {
-            self.pc += 4;
+            self.pc = new_pc - inst.len;
         }
     }
 
@@ -463,9 +331,7 @@ impl RVCore {
         //        XRegisters::name(inst.get_rs2_btype()), new_pc);
         if (self.regs.read(inst.get_rs1()) as i64) != (self.regs.read(inst.get_rs2_btype()) as i64)
         {
-            self.pc = new_pc;
-        } else {
-            self.pc += 4;
+            self.pc = new_pc - inst.len;
         }
     }
 
@@ -544,9 +410,7 @@ impl RVCore {
         offset = RVCore::sign_extend(offset, 9);
         //print!(" {},{:x}", XRegisters::name(inst.get_rs1_3b()), self.pc + offset);
         if rs1_val == 0 {
-            self.pc = self.pc.wrapping_add(offset);
-        } else {
-            self.pc += 2;
+            self.pc = self.pc.wrapping_add(offset) - inst.len;
         }
     }
 
@@ -561,9 +425,7 @@ impl RVCore {
         offset = RVCore::sign_extend(offset, 9);
         //print!(" {},{:x}", XRegisters::name(inst.get_rs1_3b()), self.pc + offset);
         if rs1_val != 0 {
-            self.pc = self.pc.wrapping_add(offset);
-        } else {
-            self.pc += 2;
+            self.pc = self.pc.wrapping_add(offset) - inst.len;
         }
     }
 
@@ -585,13 +447,13 @@ impl RVCore {
         offset |= ((imm >> 1) & 7) << 1;
         offset |= ((imm >> 0) & 1) << 5;
         let offset_with_sign = RVCore::sign_extend(offset, 12);
-        self.pc = self.pc.wrapping_add(offset_with_sign);
+        self.pc = self.pc.wrapping_add(offset_with_sign) - inst.len;
     }
 
     fn inst_c_jalr(&mut self, inst: &inst_type::InstType) {
         //print!(" {}", XRegisters::name(inst.get_rs1_cr()));
         self.regs.write(1, self.pc + 2);
-        self.pc = self.regs.read(inst.get_rs1_cr());
+        self.pc = self.regs.read(inst.get_rs1_cr()) - inst.len;
     }
 
     fn inst_c_jal(&mut self, inst: &inst_type::InstType) {
@@ -605,12 +467,12 @@ impl RVCore {
         offset |= ((imm >> 4) & 1) << 7;
         offset |= ((imm >> 1) & 7) << 1;
         offset |= ((imm >> 0) & 1) << 5;
-        self.pc += offset;
+        self.pc += offset - inst.len;
     }
 
     fn inst_c_jr(&mut self, inst: &inst_type::InstType) {
         //print!(" {}", XRegisters::name(inst.get_rs1_cr()));
-        self.pc = self.regs.read(inst.get_rs1_cr());
+        self.pc = self.regs.read(inst.get_rs1_cr()) - inst.len;
     }
 
     fn inst_c_or(&mut self, inst: &inst_type::InstType) {
@@ -819,7 +681,7 @@ impl RVCore {
             | (((imm >> 8) & 0x1) << 11)
             | (((imm >> 0) & 0xff) << 12);
         offset = RVCore::sign_extend(offset, 21);
-        self.pc = self.pc.wrapping_add(offset);
+        self.pc = self.pc.wrapping_add(offset) - inst.len;
         //print!(" {},{:x}", XRegisters::name(inst.get_rd()), self.pc);
     }
 
@@ -833,7 +695,7 @@ impl RVCore {
         let rs1_val = self.regs.read(inst.get_rs1());
         self.regs.write(inst.get_rd(), self.pc + 4);
         let offset = RVCore::sign_extend(inst.get_imm_itype(), 12);
-        self.pc = (rs1_val.wrapping_add(offset)) & (AddressType::max_value() - 1);
+        self.pc = ((rs1_val.wrapping_add(offset)) & (AddressType::max_value() - 1)) - inst.len;
     }
 
     fn inst_lb(&mut self, inst: &inst_type::InstType) {
