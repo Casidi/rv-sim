@@ -15,7 +15,8 @@ if not os.path.isdir(trace_dir):
 #test_paths = ['../riscv-tests/isa/rv64ui-p-add']
 test_paths = []
 
-for p in Path('../riscv-tests/isa').glob('rv64ui-p-*'):
+#for p in Path('../riscv-tests/isa').glob('rv64ui-p-*'):
+for p in Path('../riscv-tests/benchmarks').rglob('*.riscv'):
     if p.suffix == '.dump' or p.is_dir():
         continue
     test_paths.append(str(p))
@@ -23,7 +24,7 @@ for p in Path('../riscv-tests/isa').glob('rv64ui-p-*'):
 pass_count = 0
 for test_path in test_paths:
     test_name = os.path.basename(test_path)
-    print(f'Running {test_name}...', end='')
+    print(f'Running {test_name}...', end='', flush=True)
 
     spike_trace_file_name = os.path.join(trace_dir, f'{test_name}.spike')
     if not os.path.isfile(spike_trace_file_name):

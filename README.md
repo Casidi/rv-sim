@@ -12,9 +12,9 @@ A RISC-V instruction-accurate simulator
 - [x] Implement one RV64I instruction and reserve the flexibility for 64-bit mode (ex. ADDIW)
 - [x] (49/49) Able to run hello world program (empty main only), match pctrace to Spike
 - [x] Able to run dhrystone, match pctrace to Spike
-- [ ] Implement important CSR first (mhartid, minstret, mcycle)
-- [ ] Run riscv-tests ISA tests and see the Pass/Fail count
-    - [ ] Implement ECALL behavior, needs at lease mtvec CSR to work
+- [x] Implement important CSR first (mhartid, minstret, mcycle)
+- [x] Run riscv-tests ISA tests and see the Pass/Fail count
+    - [x] Implement ECALL behavior, needs at lease mtvec CSR to work
 - [ ] Pass all benchmarks in riscv-tests
 - [ ] (/) Able to run coremark, match pctrace to Spike
     - RV porting of cormark: [riscv-coremark](https://github.com/riscv-boom/riscv-coremark)
@@ -28,6 +28,24 @@ A RISC-V instruction-accurate simulator
 - [ ] Pass https://github.com/riscv/riscv-arch-test
 - [ ] Pass https://github.com/riscv/riscof
 - [ ] Co-sim with [riscv SAIL model](https://github.com/riscv/sail-riscv)
+
+## Benchmark Status
+- Done: Succeeds and matches Spike's pctrace
+
+Name      | Status | Description
+-----     | ------ | -----
+dhrystone | Pass   | Done
+median    | Pass   | Done
+mm        | Crash  | Unimplemented: fcvt.d.l
+mt-matmul | Crash  | Unimplemented: amoadd.w
+mt-vvadd  | Crash  | Unimplemented: amoadd.w
+multiply  | Pass   | Done
+pmp       | Crash  | Unimplemented: sfence.vma
+qsort     | Pass   | Done
+rsort     | Pass   | Done
+spmv      | Crash  | Unimplemented: fld, c.fld, ...
+towers    | Pass   | Done
+vvadd     | Pass   | Done
 
 ## Trace how Spike handle fromhost/tohost
 - Check fromhost/tohost every INTERLEAVE(5000) instructions

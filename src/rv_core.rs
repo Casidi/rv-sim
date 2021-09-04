@@ -24,7 +24,7 @@ pub struct RVCore {
     pub fregs: fregs::FRegisters,
     pub csregs: csregs::CSRegisters,
     id_instance: inst_decoder::InstDecoder,
-    mem_if: Option<Rc<RefCell<MemoryInterface>>>,
+    mem_if: Option<Rc<RefCell<dyn MemoryInterface>>>,
     mode: PrivilegeMode,
 }
 
@@ -104,6 +104,7 @@ impl RVCore {
             InstID::C_OR => self.inst_c_or(inst),
             InstID::C_SDSP => self.inst_c_sdsp(inst),
             InstID::C_SLLI => self.inst_c_slli(inst),
+            InstID::C_SRAI => self.inst_c_srai(inst),
             InstID::C_SRLI => self.inst_c_srli(inst),
             InstID::C_SW => self.inst_c_sw(inst),
             InstID::C_SWSP => self.inst_c_swsp(inst),
@@ -516,6 +517,12 @@ impl RVCore {
         let imm = inst.get_imm_ci();
         let rd_val = self.regs.read(inst.get_rd());
         self.regs.write(inst.get_rd(), rd_val << imm);
+    }
+
+    fn inst_c_srai(&mut self, inst: &inst_type::InstType) {
+        let imm = inst.get_imm_ci();
+        let rd_val = self.regs.read(inst.get_rd_3b()) as i64;
+        self.regs.write(inst.get_rd_3b(), (rd_val >> imm) as AddressType);
     }
 
     fn inst_c_srli(&mut self, inst: &inst_type::InstType) {
