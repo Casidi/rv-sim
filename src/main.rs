@@ -3,9 +3,9 @@ mod memory_interface;
 mod memory_model;
 mod rv_core;
 use goblin::elf;
+use std::cell::RefCell;
 use std::env;
 use std::fs;
-use std::cell::RefCell;
 use std::rc::Rc;
 type AddressType = u64;
 
@@ -29,21 +29,22 @@ fn main() {
     const RESET_VEC_SIZE: u32 = 8;
     let start_pc = entry;
     let reset_vec: [u32; RESET_VEC_SIZE as usize] = [
-        0x297,                                      // auipc  t0,0x0
-        0x28593 + (RESET_VEC_SIZE * 4 << 20),       // addi   a1, t0, &dtb
-        0xf1402573,                                 // csrr   a0, mhartid
-        0x0182b283u32,                              // ld     t0,24(t0)
-        0x28067,                                    // jr     t0
+        0x297,                                // auipc  t0,0x0
+        0x28593 + (RESET_VEC_SIZE * 4 << 20), // addi   a1, t0, &dtb
+        0xf1402573,                           // csrr   a0, mhartid
+        0x0182b283u32,                        // ld     t0,24(t0)
+        0x28067,                              // jr     t0
         0,
         (start_pc & 0xffffffff) as u32,
-        (start_pc >> 32) as u32
+        (start_pc >> 32) as u32,
     ];
 
     for i in 0..reset_vec.len() {
-        mem.borrow_mut().write_word((0x1000 + i*4) as AddressType, reset_vec[i]);
+        mem.borrow_mut()
+            .write_word((0x1000 + i * 4) as AddressType, reset_vec[i]);
     }
 
-    let mem_if: Rc<RefCell<memory_interface::MemoryInterface>> = mem.clone();
+    let mem_if: Rc<RefCell<dyn memory_interface::MemoryInterface>> = mem.clone();
     core.bind_mem(mem_if.clone());
     core.pc = 0x1000;
 

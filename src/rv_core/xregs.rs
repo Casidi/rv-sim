@@ -6,9 +6,7 @@ pub struct XRegisters {
 
 impl XRegisters {
     pub fn new() -> XRegisters {
-        XRegisters {
-            reg_bank: [0; 32],
-        }
+        XRegisters { reg_bank: [0; 32] }
     }
 
     pub fn read(&self, i: usize) -> AddressType {

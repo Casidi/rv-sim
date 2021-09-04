@@ -1,8 +1,8 @@
 use crate::memory_interface::{MemoryInterface, MemoryOperation, Payload};
 use std::collections::HashMap;
 //use std::convert::TryFrom;
-use std::convert::TryInto;
 use std::cell::RefCell;
+use std::convert::TryInto;
 use std::rc::Rc;
 
 type AddressType = u64;
@@ -16,14 +16,13 @@ pub struct MemoryModel {
     data: HashMap<AddressType, [u8; MemoryModel::BLOCK_SIZE]>,
 }
 
-
 impl MemoryInterface for MemoryModel {
     fn access_memory(&mut self, payload: &mut Payload) {
         self.do_access(payload.addr, &mut payload.data, payload.op);
         /*if payload.addr == 0x80025c80 && payload.op == MemoryOperation::WRITE {
-            println!("\nJC_DEBUG: Write to 0x80025c80, val = {:#04x}", payload.data[0]);
-        }
-*/
+                    println!("\nJC_DEBUG: Write to 0x80025c80, val = {:#04x}", payload.data[0]);
+                }
+        */
     }
 }
 
@@ -45,11 +44,19 @@ impl MemoryModel {
     }
 
     pub fn write_byte(&mut self, addr: AddressType, value: u8) {
-        self.do_access(addr, &mut value.to_le_bytes().to_vec(), MemoryOperation::WRITE);
+        self.do_access(
+            addr,
+            &mut value.to_le_bytes().to_vec(),
+            MemoryOperation::WRITE,
+        );
     }
 
     pub fn write_word(&mut self, addr: AddressType, value: u32) {
-        self.do_access(addr, &mut value.to_le_bytes().to_vec(), MemoryOperation::WRITE);
+        self.do_access(
+            addr,
+            &mut value.to_le_bytes().to_vec(),
+            MemoryOperation::WRITE,
+        );
     }
 
     pub fn read_word(&mut self, addr: AddressType) -> u32 {
@@ -63,10 +70,9 @@ impl MemoryModel {
             MemoryOperation::READ => {
                 let mut data_offset: usize = 0;
                 while data_offset < data.len() {
-                    let block_base = (addr + data_offset as AddressType)
-                                        & (!(0x1f as AddressType));
-                    let mut block_offset: usize = (addr
-                                        + data_offset as AddressType - block_base) as usize;
+                    let block_base = (addr + data_offset as AddressType) & (!(0x1f as AddressType));
+                    let mut block_offset: usize =
+                        (addr + data_offset as AddressType - block_base) as usize;
                     if !self.data.contains_key(&block_base) {
                         self.data.insert(block_base, [0; MemoryModel::BLOCK_SIZE]);
                     }
@@ -82,10 +88,9 @@ impl MemoryModel {
             MemoryOperation::WRITE => {
                 let mut data_offset: usize = 0;
                 while data_offset < data.len() {
-                    let block_base = (addr + data_offset as AddressType)
-                                        & (!(0x1f as AddressType));
-                    let mut block_offset: usize = (addr
-                                        + data_offset as AddressType - block_base) as usize;
+                    let block_base = (addr + data_offset as AddressType) & (!(0x1f as AddressType));
+                    let mut block_offset: usize =
+                        (addr + data_offset as AddressType - block_base) as usize;
                     if !self.data.contains_key(&block_base) {
                         self.data.insert(block_base, [0; MemoryModel::BLOCK_SIZE]);
                     }

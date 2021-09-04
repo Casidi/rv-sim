@@ -255,13 +255,12 @@ impl InstDecoder {
                         0x302 => inst.id = InstID::MRET,
                         _ => self.dump_invalid_inst(inst),
                     }
-                    
                 }
                 0x1 => inst.id = InstID::CSRRW,
                 0x2 => inst.id = InstID::CSRRS,
                 0x5 => inst.id = InstID::CSRRWI,
                 _ => self.dump_invalid_inst(inst),
-            }
+            },
             _ => self.dump_invalid_inst(inst),
         }
     }
