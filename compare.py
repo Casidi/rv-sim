@@ -15,9 +15,8 @@ if not os.path.isdir(trace_dir):
 #test_paths = ['../riscv-tests/isa/rv64ui-p-add']
 test_paths = []
 
-for p in Path('../riscv-tests/isa').glob('rv64*-p-*'):
+for p in Path('../riscv-tests/isa').glob('rv64um-p-*'):
 #for p in Path('../riscv-tests/benchmarks').rglob('*.riscv'):
-#for p in Path('../riscv-tests/isa').glob('rv64uc-p-*'):
     if p.suffix == '.dump' or p.is_dir():
         continue
     test_paths.append(str(p))
