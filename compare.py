@@ -3,7 +3,7 @@ import os
 import subprocess as sp
 import shlex
 
-spike_path = '../riscv-isa-sim-master/build/spike'
+spike_path = '../riscv-isa-sim/build/spike'
 rvsim_path = './target/debug/rv-sim'
 trace_dir = 'trace_dir'
 
@@ -15,8 +15,9 @@ if not os.path.isdir(trace_dir):
 #test_paths = ['../riscv-tests/isa/rv64ui-p-add']
 test_paths = []
 
-#for p in Path('../riscv-tests/isa').glob('rv64ui-p-*'):
-for p in Path('../riscv-tests/benchmarks').rglob('*.riscv'):
+for p in Path('../riscv-tests/isa').glob('rv64*-p-*'):
+#for p in Path('../riscv-tests/benchmarks').rglob('*.riscv'):
+#for p in Path('../riscv-tests/isa').glob('rv64uc-p-*'):
     if p.suffix == '.dump' or p.is_dir():
         continue
     test_paths.append(str(p))

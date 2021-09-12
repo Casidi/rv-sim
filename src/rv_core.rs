@@ -379,8 +379,8 @@ impl RVCore {
     fn inst_c_addiw(&mut self, inst: &inst_type::InstType) {
         let rd_val = self.regs.read(inst.get_rd());
         let imm = RVCore::sign_extend(inst.get_imm_ci(), 6);
-        let result = rd_val.wrapping_add(imm);
-        self.regs.write(inst.get_rd(), result);
+        let result = rd_val.wrapping_add(imm) as u32 as u64;
+        self.regs.write(inst.get_rd(), RVCore::sign_extend(result, 32));
     }
 
     fn inst_c_addi16sp(&mut self, inst: &inst_type::InstType) {
@@ -408,7 +408,8 @@ impl RVCore {
     fn inst_c_addw(&mut self, inst: &inst_type::InstType) {
         let a = self.regs.read(inst.get_rd_3b());
         let b = self.regs.read(inst.get_rs2_3b());
-        self.regs.write(inst.get_rd_3b(), a.wrapping_add(b));
+        let result = a.wrapping_add(b) as u32 as u64;
+        self.regs.write(inst.get_rd_3b(), RVCore::sign_extend(result, 32));
     }
 
     fn inst_c_and(&mut self, inst: &inst_type::InstType) {
@@ -581,8 +582,9 @@ impl RVCore {
         let address = self.regs.read(2) + (((imm & 0x3) << 6) | (imm & 0x3c));
         let mut data = [0; 4];
         self.read_memory(address, &mut data);
-        self.regs
-            .write(inst.get_rd(), RVCore::byte_array_to_addr_type(&data));
+
+        let result = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), result);
     }
 
     fn inst_c_li(&mut self, inst: &inst_type::InstType) {
@@ -618,7 +620,8 @@ impl RVCore {
     fn inst_c_subw(&mut self, inst: &inst_type::InstType) {
         let a = self.regs.read(inst.get_rd_3b());
         let b = self.regs.read(inst.get_rs2_3b());
-        self.regs.write(inst.get_rd_3b(), a.wrapping_sub(b));
+        let result = a.wrapping_sub(b) as u32 as u64;
+        self.regs.write(inst.get_rd_3b(), RVCore::sign_extend(result, 32));
     }
 
     fn inst_c_xor(&mut self, inst: &inst_type::InstType) {
@@ -809,7 +812,9 @@ impl RVCore {
         self.regs.write(inst.get_rd(), rs1_val * rs2_val);
     }
 
-    fn inst_mret(&mut self, _inst: &inst_type::InstType) {}
+    fn inst_mret(&mut self, _inst: &inst_type::InstType) {
+        self.mode = PrivilegeMode::U;
+    }
 
     fn inst_or(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self.regs.read(inst.get_rs1());
