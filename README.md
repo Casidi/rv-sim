@@ -20,6 +20,7 @@ A RISC-V instruction-accurate simulator
 - [x] Complete and test all RV64I instructions
 - [x] **Pass rv64uc-p-rvc to ensure the quality of RV64C instructions**
 - [ ] Refactor: implement extract_bits function to simplify inst decoding
+- [ ] (68/124) Pass all rv64*-p-* tests
 - [ ] Pass all benchmarks in riscv-tests
 - [ ] (/) Able to run coremark, match pctrace to Spike
     - RV porting of cormark: [riscv-coremark](https://github.com/riscv-boom/riscv-coremark)
@@ -159,6 +160,9 @@ make
 cd riscv-isa-sim
 mkdir build
 cd build
+
+#Note: enable-commitlog will greatly increase the executable size (97MB -> 160MB)
+#, --with-boost=no won't help
 ../configure --enable-commitlog
 make
 

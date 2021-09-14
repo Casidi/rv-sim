@@ -124,6 +124,7 @@ impl RVCore {
             InstID::CSRRWI => self.inst_csrrwi(inst),
             InstID::DIV => self.inst_div(inst),
             InstID::DIVU => self.inst_divu(inst),
+            InstID::DIVUW => self.inst_divuw(inst),
             InstID::DIVW => self.inst_divw(inst),
             InstID::ECALL => self.inst_ecall(inst),
             InstID::FENCE => self.inst_fence(inst),
@@ -139,11 +140,17 @@ impl RVCore {
             InstID::LW => self.inst_lw(inst),
             InstID::LWU => self.inst_lwu(inst),
             InstID::MUL => self.inst_mul(inst),
+            InstID::MULH => self.inst_mulh(inst),
+            InstID::MULHSU => self.inst_mulhsu(inst),
+            InstID::MULHU => self.inst_mulhu(inst),
             InstID::MULW => self.inst_mulw(inst),
             InstID::MRET => self.inst_mret(inst),
             InstID::OR => self.inst_or(inst),
             InstID::ORI => self.inst_ori(inst),
+            InstID::REM => self.inst_rem(inst),
             InstID::REMU => self.inst_remu(inst),
+            InstID::REMUW => self.inst_remuw(inst),
+            InstID::REMW => self.inst_remw(inst),
             InstID::SB => self.inst_sb(inst),
             InstID::SD => self.inst_sd(inst),
             InstID::SH => self.inst_sh(inst),
@@ -671,6 +678,17 @@ impl RVCore {
         }
     }
 
+    fn inst_divuw(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1()) as u32;
+        let rs2_val = self.regs.read(inst.get_rs2_rtype()) as u32;
+        if rs2_val == 0 {
+            self.regs.write(inst.get_rd(), AddressType::MAX);
+        } else {
+            let result = rs1_val.wrapping_div(rs2_val) as AddressType;
+            self.regs.write(inst.get_rd(), RVCore::sign_extend(result, 32));
+        }
+    }
+
     fn inst_divw(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self.regs.read(inst.get_rs1()) as i32;
         let rs2_val = self.regs.read(inst.get_rs2_rtype()) as i32;
@@ -819,6 +837,24 @@ impl RVCore {
         self.regs.write(inst.get_rd(), rs1_val.wrapping_mul(rs2_val) as u64);
     }
 
+    fn inst_mulh(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1()) as i64 as i128;
+        let rs2_val = self.regs.read(inst.get_rs2_rtype()) as i64 as i128;
+        self.regs.write(inst.get_rd(), (rs1_val.wrapping_mul(rs2_val) >> 64) as AddressType);
+    }
+
+    fn inst_mulhsu(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1()) as i64 as i128 as u128;
+        let rs2_val = self.regs.read(inst.get_rs2_rtype()) as u128;
+        self.regs.write(inst.get_rd(), (rs1_val.wrapping_mul(rs2_val) >> 64) as AddressType);
+    }
+
+    fn inst_mulhu(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1()) as u128;
+        let rs2_val = self.regs.read(inst.get_rs2_rtype()) as u128;
+        self.regs.write(inst.get_rd(), (rs1_val.wrapping_mul(rs2_val) >> 64) as AddressType);
+    }
+
     fn inst_mulw(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self.regs.read(inst.get_rs1()) as i32;
         let rs2_val = self.regs.read(inst.get_rs2_rtype()) as i32;
@@ -841,6 +877,16 @@ impl RVCore {
             .write(inst.get_rd(), self.regs.read(inst.get_rs1()) | imm);
     }
 
+    fn inst_rem(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1()) as i64;
+        let rs2_val = self.regs.read(inst.get_rs2_rtype()) as i64;
+        if rs2_val == 0 {
+            self.regs.write(inst.get_rd(), rs1_val as AddressType);
+        } else {
+            self.regs.write(inst.get_rd(), rs1_val.wrapping_rem(rs2_val) as AddressType);
+        }
+    }
+
     fn inst_remu(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self.regs.read(inst.get_rs1());
         let rs2_val = self.regs.read(inst.get_rs2_rtype());
@@ -848,6 +894,27 @@ impl RVCore {
             self.regs.write(inst.get_rd(), rs1_val);
         } else {
             self.regs.write(inst.get_rd(), rs1_val.wrapping_rem(rs2_val));
+        }
+    }
+
+    fn inst_remuw(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1()) as u32;
+        let rs2_val = self.regs.read(inst.get_rs2_rtype()) as u32;
+        if rs2_val == 0 {
+            self.regs.write(inst.get_rd(), RVCore::sign_extend(rs1_val as AddressType, 32));
+        } else {
+            let result = rs1_val.wrapping_rem(rs2_val) as AddressType;
+            self.regs.write(inst.get_rd(), RVCore::sign_extend(result, 32));
+        }
+    }
+
+    fn inst_remw(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1()) as i32;
+        let rs2_val = self.regs.read(inst.get_rs2_rtype()) as i32;
+        if rs2_val == 0 {
+            self.regs.write(inst.get_rd(), rs1_val as AddressType);
+        } else {
+            self.regs.write(inst.get_rd(), rs1_val.wrapping_rem(rs2_val) as AddressType);
         }
     }
 
