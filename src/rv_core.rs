@@ -127,8 +127,11 @@ impl RVCore {
             InstID::DIVUW => self.inst_divuw(inst),
             InstID::DIVW => self.inst_divw(inst),
             InstID::ECALL => self.inst_ecall(inst),
+            InstID::FADD_S => self.inst_fadd_s(inst),
             InstID::FENCE => self.inst_fence(inst),
+            InstID::FLW => self.inst_flw(inst),
             InstID::FMV_W_X => self.inst_fmv_w_x(inst),
+            InstID::FMV_X_W => self.inst_fmv_x_w(inst),
             InstID::JAL => self.inst_jal(inst),
             InstID::JALR => self.inst_jalr(inst),
             InstID::LB => self.inst_lb(inst),
@@ -721,14 +724,40 @@ impl RVCore {
         //panic!("ECALL: Exceptions are not supported now");
     }
 
+    fn inst_fadd_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1()) as f32;
+        let rs2_val = self.fregs.read(inst.get_rs2_stype()) as f32;
+
+        self.fregs.write(inst.get_rd(), (rs1_val + rs2_val) as f64);
+    }
+
     fn inst_fence(&mut self, _inst: &inst_type::InstType) {}
+
+    fn inst_flw(&mut self, inst: &inst_type::InstType) {
+        let base = self.regs.read(inst.get_rs1());
+        let offset = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        let addr = base.wrapping_add(offset);
+        let mut data = [0; 4];
+        self.read_memory(addr, &mut data);
+
+        self.fregs.write(inst.get_rd(), f32::from_le_bytes(data).into());
+    }
 
     fn inst_fmv_w_x(&mut self, inst: &inst_type::InstType) {
         let rs1 = inst.get_rs1();
         let rs1_lower_val = self.regs.read(rs1) as u32;
         self.fregs.write(
             inst.get_rd(),
-            f32::from_le_bytes(rs1_lower_val.to_le_bytes()).into(),
+            f32::from_bits(rs1_lower_val).into(),
+        );
+    }
+
+    fn inst_fmv_x_w(&mut self, inst: &inst_type::InstType) {
+        let rs1 = inst.get_rs1();
+        let rs1_val = self.fregs.read(rs1) as f32;
+        self.regs.write(
+            inst.get_rd(),
+            RVCore::sign_extend((rs1_val.to_bits() & 0xffffffff) as AddressType, 32)
         );
     }
 

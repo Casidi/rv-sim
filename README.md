@@ -18,7 +18,10 @@ A RISC-V instruction-accurate simulator
 - [x] Support all RV32I instructions
 - [x] Support all RV64I instructions
 - [x] Complete and test all RV64I instructions
-- [x] **Pass rv64uc-p-rvc to ensure the quality of RV64C instructions**
+- [x] Pass rv64uc-p-rvc to ensure the quality of RV64C instructions
+- [ ] Pass rv64uf-p-* tests
+- [ ] Pass rv64ua-p-* tests
+- [ ] Pass rv64ud-p-* tests
 - [ ] Refactor: implement extract_bits function to simplify inst decoding
 - [ ] (68/124) Pass all rv64*-p-* tests
 - [ ] Pass all benchmarks in riscv-tests

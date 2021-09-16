@@ -14,9 +14,7 @@ impl FRegisters {
     }
 
     pub fn write(&mut self, i: usize, val: f64) {
-        if i != 0 {
-            self.reg_bank[i] = val;
-        }
+        self.reg_bank[i] = val;
     }
 
     fn name(i: usize) -> &'static str {

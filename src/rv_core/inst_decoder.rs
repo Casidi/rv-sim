@@ -122,6 +122,10 @@ impl InstDecoder {
                 0x6 => inst.id = InstID::LWU,
                 _ => self.dump_invalid_inst(inst),
             },
+            0x7 => match funct3 {
+                0x2 => inst.id = InstID::FLW,
+                _ => self.dump_invalid_inst(inst),
+            },
             0x0f => inst.id = InstID::FENCE,
             0x13 => match funct3 {
                 0x0 => inst.id = InstID::ADDI,
@@ -264,9 +268,14 @@ impl InstDecoder {
                 0x7 => inst.id = InstID::REMUW,
                 _ => self.dump_invalid_inst(inst),
             },
-            0x53 => match funct3 {
-                0x0 => inst.id = InstID::FMV_W_X,
-                _ => self.dump_invalid_inst(inst),
+            0x53 => {
+                let funct7 = (inst_bytes >> 25) & 0x7f;
+                match funct7 {
+                    0x0 => inst.id = InstID::FADD_S,
+                    0x70 => inst.id = InstID::FMV_X_W,
+                    0x78 => inst.id = InstID::FMV_W_X,
+                    _ => self.dump_invalid_inst(inst),
+                }
             },
             0x63 => match funct3 {
                 0x0 => inst.id = InstID::BEQ,

@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 goblin = "0.4"
+softfloat-wrapper = "0.3.3"
