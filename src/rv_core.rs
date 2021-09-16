@@ -10,6 +10,8 @@ use std::cell::RefCell;
 use std::convert::TryInto;
 use std::rc::Rc;
 
+use softfloat_wrapper::{Float, F32, F64, RoundingMode, ExceptionFlags};
+
 type AddressType = u64;
 
 enum PrivilegeMode {
@@ -130,8 +132,10 @@ impl RVCore {
             InstID::FADD_S => self.inst_fadd_s(inst),
             InstID::FENCE => self.inst_fence(inst),
             InstID::FLW => self.inst_flw(inst),
+            InstID::FMUL_S => self.inst_fmul_s(inst),
             InstID::FMV_W_X => self.inst_fmv_w_x(inst),
             InstID::FMV_X_W => self.inst_fmv_x_w(inst),
+            InstID::FSUB_S => self.inst_fsub_s(inst),
             InstID::JAL => self.inst_jal(inst),
             InstID::JALR => self.inst_jalr(inst),
             InstID::LB => self.inst_lb(inst),
@@ -233,6 +237,21 @@ impl RVCore {
             1 => u8::from_le_bytes(data.try_into().unwrap()) as AddressType,
             _ => panic!("bad data length"),
         }
+    }
+
+    fn update_fflags(&mut self, flags: &ExceptionFlags) {
+        let mut val = 0;
+        if flags.is_inexact() {
+            val |= 1;
+        }
+        if flags.is_underflow() {
+            val |= 2;
+        }
+        if flags.is_invalid() {
+            val |= 0x10;
+        }
+
+        self.csregs.write(csregs::FFLAGS, val);
     }
 
     fn inst_auipc(&mut self, inst: &inst_type::InstType) {
@@ -725,10 +744,16 @@ impl RVCore {
     }
 
     fn inst_fadd_s(&mut self, inst: &inst_type::InstType) {
-        let rs1_val = self.fregs.read(inst.get_rs1()) as f32;
-        let rs2_val = self.fregs.read(inst.get_rs2_stype()) as f32;
+        let rs1_val = F32::from_f64(self.fregs.read(inst.get_rs1()));
+        let rs2_val = F32::from_f64(self.fregs.read(inst.get_rs2_stype()));
+        
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.add(rs2_val, RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
 
-        self.fregs.write(inst.get_rd(), (rs1_val + rs2_val) as f64);
+        self.fregs.write(inst.get_rd(), f32::from_bits(result.to_bits()).into());
     }
 
     fn inst_fence(&mut self, _inst: &inst_type::InstType) {}
@@ -741,6 +766,22 @@ impl RVCore {
         self.read_memory(addr, &mut data);
 
         self.fregs.write(inst.get_rd(), f32::from_le_bytes(data).into());
+    }
+
+    fn inst_fmul_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = F32::from_f64(self.fregs.read(inst.get_rs1()));
+        let rs2_val = F32::from_f64(self.fregs.read(inst.get_rs2_stype()));
+        
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.mul(rs2_val, RoundingMode::TiesToEven);
+        flag.get();
+
+        if flag.is_inexact() {
+            self.csregs.write(csregs::FFLAGS, 1);
+        }
+
+        self.fregs.write(inst.get_rd(), f32::from_bits(result.to_bits()).into());
     }
 
     fn inst_fmv_w_x(&mut self, inst: &inst_type::InstType) {
@@ -759,6 +800,23 @@ impl RVCore {
             inst.get_rd(),
             RVCore::sign_extend((rs1_val.to_bits() & 0xffffffff) as AddressType, 32)
         );
+    }
+
+    fn inst_fsub_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = F32::from_f64(self.fregs.read(inst.get_rs1()));
+        let rs2_val = F32::from_f64(self.fregs.read(inst.get_rs2_stype()));
+        
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.sub(rs2_val, RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
+
+        if (rs1_val.is_positive_infinity() && rs2_val.is_positive_infinity()) {
+            self.fregs.write(inst.get_rd(), f64::NAN);
+        } else {
+            self.fregs.write(inst.get_rd(), f32::from_bits(result.to_bits()).into());
+        }
     }
 
     fn inst_jal(&mut self, inst: &inst_type::InstType) {

@@ -1,5 +1,7 @@
 type AddressType = u64;
 
+pub const FFLAGS: AddressType = 0x1;
+pub const FCSR: AddressType = 0x3;
 pub const MTVEC: AddressType = 0x305;
 pub const MCAUSE: AddressType = 0x342;
 pub const MCYCLE: AddressType = 0xb00;

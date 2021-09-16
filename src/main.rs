@@ -9,8 +9,6 @@ use std::fs;
 use std::rc::Rc;
 type AddressType = u64;
 
-use softfloat_wrapper::{Float, F16, RoundingMode};
-
 struct InfoFromElf {
     tohost_addr: AddressType,
     fromhost_addr: AddressType,
@@ -18,20 +16,6 @@ struct InfoFromElf {
 }
 
 fn main() {
-    let a = 0x1234;
-    let b = 0x1479;
-
-    let a = F16::from_bits(a);
-    let b = F16::from_bits(b);
-    let d = a.add(b, RoundingMode::TiesToEven);
-
-    let a = f32::from_bits(a.to_f32(RoundingMode::TiesToEven).to_bits());
-    let b = f32::from_bits(b.to_f32(RoundingMode::TiesToEven).to_bits());
-    let d = f32::from_bits(d.to_f32(RoundingMode::TiesToEven).to_bits());
-
-    println!("{} + {} = {}", a, b, d);
-    panic!("");
-
     let args: Vec<String> = env::args().collect();
     if args.len() == 1 {
         println!("Error, should provide the ELF to run");
