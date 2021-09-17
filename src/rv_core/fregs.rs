@@ -1,19 +1,21 @@
+use softfloat_wrapper::{Float, F32, F64, RoundingMode, ExceptionFlags};
+
 pub struct FRegisters {
-    reg_bank: [f64; 32],
+    reg_bank: [F64; 32],
 }
 
 impl FRegisters {
     pub fn new() -> FRegisters {
         FRegisters {
-            reg_bank: [0.0; 32],
+            reg_bank: [F64::from_f64(0.0); 32],
         }
     }
 
-    pub fn read(&self, i: usize) -> f64 {
+    pub fn read(&self, i: usize) -> F64 {
         self.reg_bank[i]
     }
 
-    pub fn write(&mut self, i: usize, val: f64) {
+    pub fn write(&mut self, i: usize, val: F64) {
         self.reg_bank[i] = val;
     }
 
