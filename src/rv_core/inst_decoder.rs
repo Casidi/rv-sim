@@ -282,7 +282,13 @@ impl InstDecoder {
                             _ => self.dump_invalid_inst(inst),
                         }
                     }
-                    0x70 => inst.id = InstID::FMV_X_W,
+                    0x70 => {
+                        match funct3 {
+                            0x0 => inst.id = InstID::FMV_X_W,
+                            0x1 => inst.id = InstID::FCLASS_S,
+                            _ => self.dump_invalid_inst(inst),
+                        }
+                    }
                     0x78 => inst.id = InstID::FMV_W_X,
                     _ => self.dump_invalid_inst(inst),
                 }
