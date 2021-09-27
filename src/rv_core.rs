@@ -135,6 +135,8 @@ impl RVCore {
             InstID::FCVT_S_LU => self.inst_fcvt_s_lu(inst),
             InstID::FCVT_S_W => self.inst_fcvt_s_w(inst),
             InstID::FCVT_S_WU => self.inst_fcvt_s_wu(inst),
+            InstID::FCVT_W_S => self.inst_fcvt_w_s(inst),
+            InstID::FCVT_WU_S => self.inst_fcvt_wu_s(inst),
             InstID::FENCE => self.inst_fence(inst),
             InstID::FEQ_S => self.inst_feq_s(inst),
             InstID::FLE_S => self.inst_fle_s(inst),
@@ -813,6 +815,38 @@ impl RVCore {
         let rs1_val = self.regs.read(inst.get_rs1()) & 0xffffffff;
         let result = Float::from_u32(rs1_val as u32, RoundingMode::TiesToEven);
         self.fregs.write(inst.get_rd(), result);
+    }
+
+    fn inst_fcvt_w_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1());
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.to_i32(RoundingMode::TowardZero, true);
+        flag.get();
+        self.update_fflags(&flag);
+
+        if (result.is_negative() && rs1_val.is_positive()) {
+            self.regs.write(inst.get_rd(), i32::MAX as AddressType);
+        } else {
+            self.regs.write(inst.get_rd(), result as AddressType);
+        }
+    }
+
+    fn inst_fcvt_wu_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1());
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.to_u32(RoundingMode::TowardZero, true);
+        flag.get();
+        self.update_fflags(&flag);
+
+        if rs1_val.is_negative() {
+            self.regs.write(inst.get_rd(), 0 as AddressType);
+        } else {
+            self.regs.write(inst.get_rd(), RVCore::sign_extend(result as AddressType, 32));
+        }
     }
 
     fn inst_fence(&mut self, _inst: &inst_type::InstType) {}
