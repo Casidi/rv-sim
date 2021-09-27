@@ -282,6 +282,16 @@ impl InstDecoder {
                             _ => self.dump_invalid_inst(inst),
                         }
                     }
+                    0x68 => {
+                        let rs2 = (inst_bytes >> 20) & 0x1f;
+                        match rs2 {
+                            0x0 => inst.id = InstID::FCVT_S_W,
+                            0x1 => inst.id = InstID::FCVT_S_WU,
+                            0x2 => inst.id = InstID::FCVT_S_L,
+                            0x3 => inst.id = InstID::FCVT_S_LU,
+                            _ => self.dump_invalid_inst(inst),
+                        }
+                    }
                     0x70 => {
                         match funct3 {
                             0x0 => inst.id = InstID::FMV_X_W,
