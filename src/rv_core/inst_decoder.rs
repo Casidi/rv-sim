@@ -274,6 +274,8 @@ impl InstDecoder {
                     0x0 => inst.id = InstID::FADD_S,
                     0x4 => inst.id = InstID::FSUB_S,
                     0x8 => inst.id = InstID::FMUL_S,
+                    0xc => inst.id = InstID::FDIV_S,
+                    0x2c => inst.id = InstID::FSQRT_S,
                     0x50 => {
                         match funct3 {
                             0x0 => inst.id = InstID::FLE_S,

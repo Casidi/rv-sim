@@ -139,6 +139,8 @@ impl RVCore {
             InstID::FCVT_S_WU => self.inst_fcvt_s_wu(inst),
             InstID::FCVT_W_S => self.inst_fcvt_w_s(inst),
             InstID::FCVT_WU_S => self.inst_fcvt_wu_s(inst),
+            InstID::FDIV_S => self.inst_fdiv_s(inst),
+            InstID::FSQRT_S => self.inst_fsqrt_s(inst),
             InstID::FENCE => self.inst_fence(inst),
             InstID::FEQ_S => self.inst_feq_s(inst),
             InstID::FLE_S => self.inst_fle_s(inst),
@@ -883,6 +885,35 @@ impl RVCore {
             self.regs.write(inst.get_rd(), 0 as AddressType);
         } else {
             self.regs.write(inst.get_rd(), RVCore::sign_extend(result as AddressType, 32));
+        }
+    }
+
+    fn inst_fdiv_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1());
+        let rs2_val = self.fregs.read(inst.get_rs2_stype());
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.div(rs2_val, RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
+
+        self.fregs.write(inst.get_rd(), result);
+    }
+
+    fn inst_fsqrt_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1());
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.sqrt(RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
+
+        if rs1_val.is_negative() {
+            self.fregs.write(inst.get_rd(), F64::quiet_nan());
+        } else {
+            self.fregs.write(inst.get_rd(), result);
         }
     }
 
