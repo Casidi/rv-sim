@@ -131,6 +131,8 @@ impl RVCore {
             InstID::ECALL => self.inst_ecall(inst),
             InstID::FADD_S => self.inst_fadd_s(inst),
             InstID::FCLASS_S => self.inst_fclass_s(inst),
+            InstID::FCVT_L_S => self.inst_fcvt_l_s(inst),
+            InstID::FCVT_LU_S => self.inst_fcvt_lu_s(inst),
             InstID::FCVT_S_L => self.inst_fcvt_s_l(inst),
             InstID::FCVT_S_LU => self.inst_fcvt_s_lu(inst),
             InstID::FCVT_S_W => self.inst_fcvt_s_w(inst),
@@ -793,6 +795,38 @@ impl RVCore {
         }
     }
 
+    fn inst_fcvt_l_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1());
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.to_i64(RoundingMode::TowardZero, true);
+        flag.get();
+        self.update_fflags(&flag);
+
+        if (rs1_val.is_nan() || rs1_val.is_positive_infinity()) {
+            self.regs.write(inst.get_rd(), i64::MAX as AddressType);
+        } else {
+            self.regs.write(inst.get_rd(), result as AddressType);
+        }
+    }
+
+    fn inst_fcvt_lu_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1());
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.to_u64(RoundingMode::TowardZero, true);
+        flag.get();
+        self.update_fflags(&flag);
+
+        if rs1_val.is_nan() {
+            self.regs.write(inst.get_rd(), AddressType::MAX);
+        } else if rs1_val.is_negative() {
+            self.regs.write(inst.get_rd(), 0);
+        } else {
+            self.regs.write(inst.get_rd(), result as AddressType);
+        }
+    }
+
     fn inst_fcvt_s_l(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self.regs.read(inst.get_rs1());
         let result = Float::from_i64(rs1_val as i64, RoundingMode::TiesToEven);
@@ -826,7 +860,8 @@ impl RVCore {
         flag.get();
         self.update_fflags(&flag);
 
-        if (result.is_negative() && rs1_val.is_positive()) {
+        if ((result.is_negative() && rs1_val.is_positive())
+            || (rs1_val.is_nan() && rs1_val.is_negative())) {
             self.regs.write(inst.get_rd(), i32::MAX as AddressType);
         } else {
             self.regs.write(inst.get_rd(), result as AddressType);
@@ -842,7 +877,9 @@ impl RVCore {
         flag.get();
         self.update_fflags(&flag);
 
-        if rs1_val.is_negative() {
+        if rs1_val.is_nan() {
+            self.regs.write(inst.get_rd(), AddressType::MAX);
+        } else if rs1_val.is_negative() {
             self.regs.write(inst.get_rd(), 0 as AddressType);
         } else {
             self.regs.write(inst.get_rd(), RVCore::sign_extend(result as AddressType, 32));

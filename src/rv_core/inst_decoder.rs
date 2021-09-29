@@ -287,6 +287,8 @@ impl InstDecoder {
                         match rs2 {
                             0x0 => inst.id = InstID::FCVT_W_S,
                             0x1 => inst.id = InstID::FCVT_WU_S,
+                            0x2 => inst.id = InstID::FCVT_L_S,
+                            0x3 => inst.id = InstID::FCVT_LU_S,
                             _ => self.dump_invalid_inst(inst),
                         }
                     }
