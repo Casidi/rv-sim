@@ -268,6 +268,10 @@ impl InstDecoder {
                 0x7 => inst.id = InstID::REMUW,
                 _ => self.dump_invalid_inst(inst),
             },
+            0x43 => inst.id = InstID::FMADD_S,
+            0x47 => inst.id = InstID::FMSUB_S,
+            0x4b => inst.id = InstID::FNMSUB_S,
+            0x4f => inst.id = InstID::FNMADD_S,
             0x53 => {
                 let funct7 = (inst_bytes >> 25) & 0x7f;
                 match funct7 {

@@ -140,6 +140,10 @@ impl RVCore {
             InstID::FCVT_W_S => self.inst_fcvt_w_s(inst),
             InstID::FCVT_WU_S => self.inst_fcvt_wu_s(inst),
             InstID::FDIV_S => self.inst_fdiv_s(inst),
+            InstID::FMADD_S => self.inst_fmadd_s(inst),
+            InstID::FMSUB_S => self.inst_fmsub_s(inst),
+            InstID::FNMADD_S => self.inst_fnmadd_s(inst),
+            InstID::FNMSUB_S => self.inst_fnmsub_s(inst),
             InstID::FSQRT_S => self.inst_fsqrt_s(inst),
             InstID::FENCE => self.inst_fence(inst),
             InstID::FEQ_S => self.inst_feq_s(inst),
@@ -899,6 +903,66 @@ impl RVCore {
         self.update_fflags(&flag);
 
         self.fregs.write(inst.get_rd(), result);
+    }
+
+    fn inst_fmadd_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
+        let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
+        let rs3_val = self.fregs.read(inst.get_rs3()).to_f32(RoundingMode::TiesToEven);
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let mul_result = rs1_val.mul(rs2_val, RoundingMode::TiesToEven);
+        let result = mul_result.add(rs3_val, RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
+
+        self.fregs.write(inst.get_rd(), result.to_f64(RoundingMode::TiesToEven));
+    }
+
+    fn inst_fmsub_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
+        let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
+        let rs3_val = self.fregs.read(inst.get_rs3()).to_f32(RoundingMode::TiesToEven);
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let mul_result = rs1_val.mul(rs2_val, RoundingMode::TiesToEven);
+        let result = mul_result.sub(rs3_val, RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
+
+        self.fregs.write(inst.get_rd(), result.to_f64(RoundingMode::TiesToEven));
+    }
+
+    fn inst_fnmadd_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
+        let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
+        let rs3_val = self.fregs.read(inst.get_rs3()).to_f32(RoundingMode::TiesToEven);
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let mul_result = rs1_val.mul(rs2_val, RoundingMode::TiesToEven).neg();
+        let result = mul_result.sub(rs3_val, RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
+
+        self.fregs.write(inst.get_rd(), result.to_f64(RoundingMode::TiesToEven));
+    }
+
+    fn inst_fnmsub_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
+        let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
+        let rs3_val = self.fregs.read(inst.get_rs3()).to_f32(RoundingMode::TiesToEven);
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let mul_result = rs1_val.mul(rs2_val, RoundingMode::TiesToEven).neg();
+        let result = mul_result.add(rs3_val, RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
+
+        self.fregs.write(inst.get_rd(), result.to_f64(RoundingMode::TiesToEven));
     }
 
     fn inst_fsqrt_s(&mut self, inst: &inst_type::InstType) {

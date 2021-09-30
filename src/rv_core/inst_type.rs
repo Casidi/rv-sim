@@ -56,6 +56,10 @@ impl InstType {
         ((self.data >> 20) & 0x1f) as usize
     }
 
+    pub fn get_rs3(&self) -> usize {
+        ((self.data >> 27) & 0x1f) as usize
+    }
+
     pub fn get_shamt_itype(&self) -> AddressType {
         (self.data >> 20) & 0x1f
     }
