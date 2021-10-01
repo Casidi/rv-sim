@@ -141,6 +141,8 @@ impl RVCore {
             InstID::FCVT_WU_S => self.inst_fcvt_wu_s(inst),
             InstID::FDIV_S => self.inst_fdiv_s(inst),
             InstID::FMADD_S => self.inst_fmadd_s(inst),
+            InstID::FMAX_S => self.inst_fmax_s(inst),
+            InstID::FMIN_S => self.inst_fmin_s(inst),
             InstID::FMSUB_S => self.inst_fmsub_s(inst),
             InstID::FNMADD_S => self.inst_fnmadd_s(inst),
             InstID::FNMSUB_S => self.inst_fnmsub_s(inst),
@@ -920,6 +922,58 @@ impl RVCore {
         self.fregs.write(inst.get_rd(), result.to_f64(RoundingMode::TiesToEven));
     }
 
+    fn inst_fmax_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
+        let rs1_val_f64 = self.fregs.read(inst.get_rs1());
+        let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
+
+        if rs1_val.is_nan() {
+            if rs2_val.is_nan() {
+                self.fregs.write(inst.get_rd(), F64::quiet_nan());
+            } else {
+                self.fregs.write(inst.get_rd(), rs2_val.to_f64(RoundingMode::TiesToEven));
+                if rs1_val_f64.is_signaling_nan() {
+                    self.csregs.write(csregs::FFLAGS, 0x10);
+                }
+            }
+        } else if rs2_val.is_nan() {
+            self.fregs.write(inst.get_rd(), rs1_val.to_f64(RoundingMode::TiesToEven));
+        } else {
+            if ((rs1_val.is_positive_zero() && rs2_val.is_negative_zero())
+                || (rs1_val.is_negative_zero() && rs2_val.is_positive_zero())) {
+                self.fregs.write(inst.get_rd(), F64::positive_zero());
+            } else if rs1_val.lt(rs2_val) {
+                self.fregs.write(inst.get_rd(), rs2_val.to_f64(RoundingMode::TiesToEven));
+            } else {
+                self.fregs.write(inst.get_rd(), rs1_val.to_f64(RoundingMode::TiesToEven));
+            }
+        }
+    }
+
+    fn inst_fmin_s(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
+        let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
+
+        if rs1_val.is_nan() {
+            if rs2_val.is_nan() {
+                self.fregs.write(inst.get_rd(), F64::quiet_nan());
+            } else {
+                self.fregs.write(inst.get_rd(), rs2_val.to_f64(RoundingMode::TiesToEven));
+            }
+        } else if rs2_val.is_nan() {
+            self.fregs.write(inst.get_rd(), rs1_val.to_f64(RoundingMode::TiesToEven));
+        } else {
+            if ((rs1_val.is_positive_zero() && rs2_val.is_negative_zero())
+                || (rs1_val.is_negative_zero() && rs2_val.is_positive_zero())) {
+                self.fregs.write(inst.get_rd(), F64::negative_zero());
+            } else if rs1_val.lt(rs2_val) {
+                self.fregs.write(inst.get_rd(), rs1_val.to_f64(RoundingMode::TiesToEven));
+            } else {
+                self.fregs.write(inst.get_rd(), rs2_val.to_f64(RoundingMode::TiesToEven));
+            }
+        }
+    }
+
     fn inst_fmsub_s(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
         let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
@@ -1041,7 +1095,7 @@ impl RVCore {
         self.read_memory(addr, &mut data);
 
         let f32_val = F32::from_bits(u32::from_le_bytes(data));
-        if f32_val.is_signaling_nan() {
+        if f32_val.is_signaling_nan() || u32::from_le_bytes(data) == 0x7f800001 {
             self.fregs.write(inst.get_rd(), F64::from_bits(0x7ff0000000000001));
         } else {
             self.fregs.write(inst.get_rd(), f32_val.to_f64(RoundingMode::TiesToEven));
