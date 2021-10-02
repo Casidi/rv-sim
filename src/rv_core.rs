@@ -1635,186 +1635,175 @@ mod tests {
         fixture.core.inst_auipc(&inst_auipc_code(1, 0xffff1000));
         assert_eq!(0xffff1000 + 0x1234, fixture.core.regs.read(1));
     }
-    /*
-        #[test]
-        fn test_inst_addi() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(2, 0x1234);
-            core.inst_addi(&inst_addi_code(1, 2, 0x7ff));
-            assert_eq!(0x7ff + 0x1234, core.regs.read(1));
-        }
 
-        #[test]
-        fn test_inst_andi() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(2, 0x1234);
-            core.inst_andi(&inst_andi_code(1, 2, 0x7ff));
-            assert_eq!(0x7ff & 0x1234, core.regs.read(1));
-        }
+    #[test]
+    fn test_inst_addi() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x1234);
+        core.inst_addi(&inst_addi_code(1, 2, 0x7ff));
+        assert_eq!(0x7ff + 0x1234, core.regs.read(1));
+    }
 
-        #[test]
-        fn test_inst_bgeu() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(2, 0x1234);
-            core.regs.write(3, 0x1234);
-            core.inst_bgeu(&inst_bgeu_code(2, 3, 0x7fe));
-            assert_eq!(0x7fe, core.pc);
+    #[test]
+    fn test_inst_andi() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x1234);
+        core.inst_andi(&inst_andi_code(1, 2, 0x7ff));
+        assert_eq!(0x7ff & 0x1234, core.regs.read(1));
+    }
 
-            core.pc = 0;
-            core.regs.write(2, 0x1230);
-            core.regs.write(3, 0x1234);
-            core.inst_bgeu(&inst_bgeu_code(2, 3, 0x7fe));
-            assert_eq!(0x4, core.pc);
-        }
+    #[test]
+    fn test_inst_bgeu() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x1234);
+        core.regs.write(3, 0x1234);
+        core.inst_bgeu(&inst_bgeu_code(2, 3, 0x7fe));
+        assert_eq!(0x7fe - 4, core.pc);
 
-        #[test]
-        fn test_inst_c_add() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(2, 0xff);
-            core.regs.write(3, 0xfafafafa);
-            core.inst_c_add(&inst_c_add_code(2, 3));
-            assert_eq!(0xfafafafa + 0xff, core.regs.read(2));
-        }
+        core.pc = 0;
+        core.regs.write(2, 0x1230);
+        core.regs.write(3, 0x1234);
+        core.inst_bgeu(&inst_bgeu_code(2, 3, 0x7fe));
+        assert_eq!(0, core.pc);
+    }
 
-        #[test]
-        fn test_inst_c_addi() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(2, 0x1234);
-            core.inst_c_addi(&inst_c_addi_code(2, 0x1));
-            assert_eq!(0x1235, core.regs.read(2));
-        }
+    #[test]
+    fn test_inst_c_add() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0xff);
+        core.regs.write(3, 0xfafafafa);
+        core.inst_c_add(&inst_c_add_code(2, 3));
+        assert_eq!(0xfafafafa + 0xff, core.regs.read(2));
+    }
 
-        #[test]
-        fn test_inst_c_andi() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(8, 0b111000111);
-            core.inst_c_andi(&inst_c_andi_code(8, 0b111100));
-            assert_eq!(0b111000100, core.regs.read(8));
-        }
+    #[test]
+    fn test_inst_c_addi() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x1234);
+        core.inst_c_addi(&inst_c_addi_code(2, 0x1));
+        assert_eq!(0x1235, core.regs.read(2));
+    }
 
-        #[test]
-        fn test_inst_c_beqz() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(10, 0);
-            core.inst_c_beqz(&inst_c_beqz_code(10, 0xfe));
-            assert_eq!(0xfe, core.pc);
+    #[test]
+    fn test_inst_c_andi() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(8, 0b111000111);
+        core.inst_c_andi(&inst_c_andi_code(8, 0b111100));
+        assert_eq!(0b111000100, core.regs.read(8));
+    }
 
-            core.pc = 0;
-            core.regs.write(10, 1);
-            core.inst_c_beqz(&inst_c_beqz_code(10, 0xfe));
-            assert_eq!(2, core.pc);
-        }
+    #[test]
+    fn test_inst_c_beqz() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(10, 0);
+        core.inst_c_beqz(&inst_c_beqz_code(10, 0xfe));
+        assert_eq!(0xfe - 2, core.pc);
 
-        #[test]
-        fn test_inst_c_bnez() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(10, 1);
-            core.inst_c_bnez(&inst_c_bnez_code(10, 0xfe));
-            assert_eq!(0xfe, core.pc);
+        core.pc = 0;
+        core.regs.write(10, 1);
+        core.inst_c_beqz(&inst_c_beqz_code(10, 0xfe));
+        assert_eq!(0, core.pc);
+    }
 
-            core.pc = 0;
-            core.regs.write(10, 0);
-            core.inst_c_bnez(&inst_c_bnez_code(10, 0xfe));
-            assert_eq!(2, core.pc);
-        }
+    #[test]
+    fn test_inst_c_bnez() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(10, 1);
+        core.inst_c_bnez(&inst_c_bnez_code(10, 0xfe));
+        assert_eq!(0xfe - 2, core.pc);
 
-        #[test]
-        fn test_inst_c_j() {
-            let mut core: RVCore = RVCore::new();
-            core.pc = 0xfff0;
-            core.inst_c_j(&inst_c_j_code(0xfe));
-            assert_eq!(0xfff0 + 0xfe, core.pc);
-        }
+        core.pc = 0;
+        core.regs.write(10, 0);
+        core.inst_c_bnez(&inst_c_bnez_code(10, 0xfe));
+        assert_eq!(0, core.pc);
+    }
 
-        #[test]
-        fn test_inst_c_jal() {
-            let mut core: RVCore = RVCore::new();
-            core.pc = 0xfff0;
-            core.inst_c_jal(&inst_c_jal_code(0xffe));
-            assert_eq!(0xfff2, core.regs.read(1));
-            assert_eq!(0xfff0 + 0xffe, core.pc);
-        }
+    #[test]
+    fn test_inst_c_j() {
+        let mut core: RVCore = RVCore::new();
+        core.pc = 0xfff0;
+        core.inst_c_j(&inst_c_j_code(0xfe));
+        assert_eq!(0xfff0 + 0xfe - 2, core.pc);
+    }
 
-        #[test]
-        fn test_inst_c_jr() {
-            let mut core: RVCore = RVCore::new();
-            core.pc = 0x0;
-            core.regs.write(8, 0x6666);
-            core.inst_c_jr(&inst_c_jr_code(8));
-            assert_eq!(0x6666, core.pc);
-        }
+    #[test]
+    fn test_inst_c_jr() {
+        let mut core: RVCore = RVCore::new();
+        core.pc = 0x0;
+        core.regs.write(8, 0x6666);
+        core.inst_c_jr(&inst_c_jr_code(8));
+        assert_eq!(0x6664, core.pc);
+    }
 
-        #[test]
-        fn test_inst_c_swsp() {
-            let mut core: RVCore = RVCore::new();
-            let mut mem_stub: MemoryStub = Default::default();
-            core.bind_mem(&mut mem_stub);
+    #[test]
+    fn test_inst_c_swsp() {
+        let mut ft = Fixture::new();
 
-            core.regs.write(1, 0x12345678); // Data
-            core.regs.write(2, 0x8888); // Address
-            core.inst_c_swsp(&inst_c_swsp_code(1, 0x4));
-            assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
-            assert_eq!(0x888c, mem_stub.buffer.addr);
-            assert_eq!([0x78, 0x56, 0x34, 0x12].to_vec(), mem_stub.buffer.data);
-        }
+        ft.core.regs.write(1, 0x12345678); // Data
+        ft.core.regs.write(2, 0x8888); // Address
+        ft.core.inst_c_swsp(&inst_c_swsp_code(1, 0x4));
 
-        #[test]
-        fn test_inst_c_lw() {
-            let mut core: RVCore = RVCore::new();
-            let mut mem_stub: MemoryStub = Default::default();
-            core.bind_mem(&mut mem_stub);
+        let result = &ft.mem_stub.borrow().buffer;
+        assert_eq!(MemoryOperation::WRITE, result.op);
+        assert_eq!(0x888c, result.addr);
+        assert_eq!([0x78, 0x56, 0x34, 0x12].to_vec(), result.data);
+    }
 
-            core.regs.write(9, 0x8888); // Address
-            core.inst_c_lw(&inst_c_lw_code(8, 9, 0x4));
-            assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
-            assert_eq!(0x888c, mem_stub.buffer.addr);
-        }
+    #[test]
+    fn test_inst_c_lw() {
+        let mut ft = Fixture::new();
 
-        #[test]
-        fn test_inst_c_lwsp() {
-            let mut core: RVCore = RVCore::new();
-            let mut mem_stub: MemoryStub = Default::default();
-            core.bind_mem(&mut mem_stub);
+        ft.core.regs.write(9, 0x8888); // Address
+        ft.core.inst_c_lw(&inst_c_lw_code(8, 9, 0x4));
 
-            core.regs.write(2, 0x8888); // Address
-            core.inst_c_lwsp(&inst_c_lwsp_code(1, 0x4));
-            assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
-            assert_eq!(0x888c, mem_stub.buffer.addr);
-        }
+        let result = &ft.mem_stub.borrow().buffer;
+        assert_eq!(MemoryOperation::READ, result.op);
+        assert_eq!(0x888c, result.addr);
+    }
 
-        #[test]
-        fn test_inst_c_li() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(2, 0x0);
-            core.inst_c_li(&inst_c_li_code(2, 0x1f));
-            assert_eq!(0x1f, core.regs.read(2));
-        }
+    #[test]
+    fn test_inst_c_lwsp() {
+        let mut ft = Fixture::new();
 
-        #[test]
-        fn test_inst_c_mv() {
-            let mut core: RVCore = RVCore::new();
-            core.regs.write(2, 0x0);
-            core.regs.write(3, 0xfafafafa);
-            core.inst_c_mv(&inst_c_mv_code(2, 3));
-            assert_eq!(0xfafafafa, core.regs.read(2));
-        }
+        ft.core.regs.write(2, 0x8888); // Address
+        ft.core.inst_c_lwsp(&inst_c_lwsp_code(1, 0x4));
 
-        #[test]
-        fn test_inst_c_sd() {
-            let mut core: RVCore = RVCore::new();
-            let mut mem_stub: MemoryStub = Default::default();
-            core.bind_mem(&mut mem_stub);
+        let result = &ft.mem_stub.borrow().buffer;
+        assert_eq!(MemoryOperation::READ, result.op);
+        assert_eq!(0x888c, result.addr);
+    }
 
-            core.regs.write(8, 0x12345678); // Data
-            core.regs.write(9, 0x8888); // Address
-            core.inst_c_sd(&inst_c_sd_code(8, 9, 0x18));
-            assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
-            assert_eq!(0x8888 + 0x18, mem_stub.buffer.addr);
-            assert_eq!(
-                [0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0].to_vec(),
-                mem_stub.buffer.data
-            );
-        }
+    #[test]
+    fn test_inst_c_li() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x0);
+        core.inst_c_li(&inst_c_li_code(2, 0x1f));
+        assert_eq!(0x1f, core.regs.read(2));
+    }
+
+    #[test]
+    fn test_inst_c_mv() {
+        let mut core: RVCore = RVCore::new();
+        core.regs.write(2, 0x0);
+        core.regs.write(3, 0xfafafafa);
+        core.inst_c_mv(&inst_c_mv_code(2, 3));
+        assert_eq!(0xfafafafa, core.regs.read(2));
+    }
+
+    #[test]
+    fn test_inst_c_sd() {
+        let mut ft = Fixture::new();
+
+        ft.core.regs.write(8, 0x12345678); // Data
+        ft.core.regs.write(9, 0x8888); // Address
+        ft.core.inst_c_sd(&inst_c_sd_code(8, 9, 0x18));
+        assert_eq!(MemoryOperation::WRITE, ft.mem_stub.borrow().buffer.op);
+        assert_eq!(0x8888 + 0x18, ft.mem_stub.borrow().buffer.addr);
+        assert_eq!(
+            [0x78, 0x56, 0x34, 0x12, 0, 0, 0, 0].to_vec(),
+            ft.mem_stub.borrow().buffer.data
+        );
+    }
 
         #[test]
         fn test_inst_c_sub() {
@@ -1831,7 +1820,7 @@ mod tests {
             core.regs.write(8, 0xffffffff);
             core.inst_jal(&inst_jal_code(8, 0xff00));
             assert_eq!(4, core.regs.read(8));
-            assert_eq!(0xff00, core.pc);
+            assert_eq!(0xff00 - 4, core.pc);
         }
 
         #[test]
@@ -1839,23 +1828,23 @@ mod tests {
             let mut core: RVCore = RVCore::new();
             core.regs.write(8, 0xffffffff);
             core.regs.write(9, 0x66);
+
+            //0xfff will be masked into 0xffe (-2)
             core.inst_jalr(&inst_jalr_code(8, 9, 0xfff));
             assert_eq!(4, core.regs.read(8));
-            assert_eq!(0x66 - 2, core.pc);
+            assert_eq!(0x66 - 4 - 2, core.pc);
         }
 
-        #[test]
-        fn test_inst_ld() {
-            let mut core: RVCore = RVCore::new();
-            let mut mem_stub: MemoryStub = Default::default();
-            core.bind_mem(&mut mem_stub);
+    #[test]
+    fn test_inst_ld() {
+        let mut ft = Fixture::new();
 
-            core.regs.write(1, 0x8888); // Address
-            core.inst_ld(&inst_ld_code(2, 1, 0xffe));
-            assert_eq!(MemoryOperation::READ, mem_stub.buffer.op);
-            assert_eq!(0x8888 - 2, mem_stub.buffer.addr);
-        }
-    */
+        ft.core.regs.write(1, 0x8888); // Address
+        ft.core.inst_ld(&inst_ld_code(2, 1, 0xffe));
+        assert_eq!(MemoryOperation::READ, ft.mem_stub.borrow().buffer.op);
+        assert_eq!(0x8888 - 2, ft.mem_stub.borrow().buffer.addr);
+    }
+
     #[test]
     fn test_inst_lw() {
         let mut fixture = Fixture::new();
@@ -1864,21 +1853,19 @@ mod tests {
         assert_eq!(MemoryOperation::READ, fixture.mem_stub.borrow().buffer.op);
         assert_eq!(0x8888 + 0x7f0, fixture.mem_stub.borrow().buffer.addr);
     }
-    /*
+
     #[test]
     fn test_inst_sb() {
-        let mut core: RVCore = RVCore::new();
-        let mut mem_stub: MemoryStub = Default::default();
-        core.bind_mem(&mut mem_stub);
+        let mut ft = Fixture::new();
 
-        core.regs.write(1, 0xffffff78); // Data
-        core.regs.write(2, 0x8888); // Address
-        core.inst_sb(&inst_sb_code(1, 2, 0xff));
-        assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
-        assert_eq!(0x8888 + 0xff, mem_stub.buffer.addr);
-        assert_eq!([0x78].to_vec(), mem_stub.buffer.data);
+        ft.core.regs.write(1, 0xffffff78); // Data
+        ft.core.regs.write(2, 0x8888); // Address
+        ft.core.inst_sb(&inst_sb_code(1, 2, 0xff));
+        assert_eq!(MemoryOperation::WRITE, ft.mem_stub.borrow().buffer.op);
+        assert_eq!(0x8888 + 0xff, ft.mem_stub.borrow().buffer.addr);
+        assert_eq!([0x78].to_vec(), ft.mem_stub.borrow().buffer.data);
     }
-*/
+
     #[test]
     fn test_inst_sd() {
         let mut fixture = Fixture::new();
