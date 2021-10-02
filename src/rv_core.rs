@@ -60,6 +60,7 @@ impl RVCore {
             inst_info::inst_info_table[inst.id as usize].name
         );
         for i in 0..32 {
+            //print!(", {}={:08x}", self.regs.name(i), self.regs.read(i));
             print!(", r{}={:08x}", i, self.regs.read(i));
         }
         println!("");
@@ -121,6 +122,7 @@ impl RVCore {
             InstID::C_SUBW => self.inst_c_subw(inst),
             InstID::C_SD => self.inst_c_sd(inst),
             InstID::C_XOR => self.inst_c_xor(inst),
+            InstID::CSRRCI => self.inst_csrrci(inst),
             InstID::CSRRS => self.inst_csrrs(inst),
             InstID::CSRRW => self.inst_csrrw(inst),
             InstID::CSRRWI => self.inst_csrrwi(inst),
@@ -147,11 +149,15 @@ impl RVCore {
             InstID::FNMADD_S => self.inst_fnmadd_s(inst),
             InstID::FNMSUB_S => self.inst_fnmsub_s(inst),
             InstID::FSQRT_S => self.inst_fsqrt_s(inst),
+            InstID::FSGNJ_S => self.inst_fsgnj_s(inst),
+            InstID::FSGNJN_S => self.inst_fsgnjn_s(inst),
+            InstID::FSGNJX_S => self.inst_fsgnjx_s(inst),
             InstID::FENCE => self.inst_fence(inst),
             InstID::FEQ_S => self.inst_feq_s(inst),
             InstID::FLE_S => self.inst_fle_s(inst),
             InstID::FLT_S => self.inst_flt_s(inst),
             InstID::FLW => self.inst_flw(inst),
+            InstID::FSW => self.inst_fsw(inst),
             InstID::FMUL_S => self.inst_fmul_s(inst),
             InstID::FMV_W_X => self.inst_fmv_w_x(inst),
             InstID::FMV_X_W => self.inst_fmv_x_w(inst),
@@ -679,11 +685,24 @@ impl RVCore {
         self.regs.write(inst.get_rd_3b(), a ^ b);
     }
 
-    fn inst_csrrs(&mut self, inst: &inst_type::InstType) {
+    fn inst_csrrci(&mut self, inst: &inst_type::InstType) {
         let rd = inst.get_rd();
-        //let rs1 = inst.get_rs1();
+        let imm = inst.get_rs1() as AddressType;
         let csr = inst.get_csr();
         self.regs.write(rd, self.csregs.read(csr));
+        self.csregs.write(csr, !imm & self.csregs.read(csr));
+        //println!("JC_DEBUG: csrrs: writing csr {}, val {:#x}, rs1={:#x}", csr
+        //            , self.regs.read(rs1) | self.csregs.read(csr), self.regs.read(rs1));
+    }
+
+    fn inst_csrrs(&mut self, inst: &inst_type::InstType) {
+        let rd = inst.get_rd();
+        let rs1 = inst.get_rs1();
+        let csr = inst.get_csr();
+        self.regs.write(rd, self.csregs.read(csr));
+        self.csregs.write(csr, self.regs.read(rs1) | self.csregs.read(csr));
+        //println!("JC_DEBUG: csrrs: writing csr {}, val {:#x}, rs1={:#x}", csr
+        //            , self.regs.read(rs1) | self.csregs.read(csr), self.regs.read(rs1));
     }
 
     fn inst_csrrw(&mut self, inst: &inst_type::InstType) {
@@ -694,10 +713,19 @@ impl RVCore {
         self.csregs.write(csr, self.regs.read(rs1));
     }
 
-    fn inst_csrrwi(&mut self, _inst: &inst_type::InstType) {
-        //let rd = inst.get_rd();
-        //let rs1 = inst.get_rs1();
-        //let csr = inst.get_csr();
+    fn inst_csrrwi(&mut self, inst: &inst_type::InstType) {
+        let rd = inst.get_rd();
+        let imm = inst.get_rs1() as AddressType;
+        let csr = inst.get_csr();
+
+        // Prevent csr read when rd == 0
+        if rd != 0 {
+            self.regs.write(rd, self.csregs.read(csr));
+        }
+
+        //println!("JC_DEBUG: csrrwi: read csr {}, val = {:#x}, write val={:#x}"
+        //            , csr, self.csregs.read(csr), imm);
+        self.csregs.write(csr, imm);
     }
 
     fn inst_div(&mut self, inst: &inst_type::InstType) {
@@ -764,7 +792,6 @@ impl RVCore {
     }
 
     fn inst_fadd_s(&mut self, inst: &inst_type::InstType) {
-        let mode = RoundingMode::TiesToEven;
         let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
         let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
         
@@ -1035,6 +1062,27 @@ impl RVCore {
         }
     }
 
+    fn inst_fsgnj_s(&mut self, inst: &inst_type::InstType) {
+        let mut rs1_val = self.fregs.read(inst.get_rs1());
+        let rs2_val = self.fregs.read(inst.get_rs2_stype());
+        rs1_val.set_sign(rs2_val.sign());
+        self.fregs.write(inst.get_rd(), rs1_val);
+    }
+
+    fn inst_fsgnjn_s(&mut self, inst: &inst_type::InstType) {
+        let mut rs1_val = self.fregs.read(inst.get_rs1());
+        let rs2_val = self.fregs.read(inst.get_rs2_stype());
+        rs1_val.set_sign(rs2_val.sign() ^ 1);
+        self.fregs.write(inst.get_rd(), rs1_val);
+    }
+
+    fn inst_fsgnjx_s(&mut self, inst: &inst_type::InstType) {
+        let mut rs1_val = self.fregs.read(inst.get_rs1());
+        let rs2_val = self.fregs.read(inst.get_rs2_stype());
+        rs1_val.set_sign(rs2_val.sign() ^ rs1_val.sign());
+        self.fregs.write(inst.get_rd(), rs1_val);
+    }
+
     fn inst_fence(&mut self, _inst: &inst_type::InstType) {}
 
     fn inst_feq_s(&mut self, inst: &inst_type::InstType) {
@@ -1100,6 +1148,14 @@ impl RVCore {
         } else {
             self.fregs.write(inst.get_rd(), f32_val.to_f64(RoundingMode::TiesToEven));
         }
+    }
+
+    fn inst_fsw(&mut self, inst: &inst_type::InstType) {
+        let base = self.regs.read(inst.get_rs1());
+        let offset = RVCore::sign_extend(inst.get_imm_btype(), 12);
+        let addr = base.wrapping_add(offset);
+        let data = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven).to_bits();
+        self.write_memory(addr, &data.to_le_bytes());
     }
 
     fn inst_fmul_s(&mut self, inst: &inst_type::InstType) {
