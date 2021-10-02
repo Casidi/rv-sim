@@ -101,7 +101,6 @@ impl RVCore {
             InstID::C_BNEZ => self.inst_c_bnez(inst),
             InstID::C_FSDSP => self.inst_c_fsdsp(inst),
             InstID::C_J => self.inst_c_j(inst),
-            InstID::C_JAL => self.inst_c_jal(inst),
             InstID::C_JALR => self.inst_c_jalr(inst),
             InstID::C_JR => self.inst_c_jr(inst),
             InstID::C_OR => self.inst_c_or(inst),
@@ -537,7 +536,7 @@ impl RVCore {
         self.pc = self.regs.read(inst.get_rs1_cr()) - inst.len;
     }
 
-    fn inst_c_jal(&mut self, inst: &inst_type::InstType) {
+    /*fn inst_c_jal(&mut self, inst: &inst_type::InstType) {
         self.regs.write(1, self.pc + 2);
         let imm = inst.get_imm_cj();
         let mut offset = ((imm >> 10) & 1) << 11;
@@ -549,7 +548,7 @@ impl RVCore {
         offset |= ((imm >> 1) & 7) << 1;
         offset |= ((imm >> 0) & 1) << 5;
         self.pc += offset - inst.len;
-    }
+    }*/
 
     fn inst_c_jr(&mut self, inst: &inst_type::InstType) {
         //print!(" {}", XRegisters::name(inst.get_rs1_cr()));
@@ -838,7 +837,7 @@ impl RVCore {
         flag.get();
         self.update_fflags(&flag);
 
-        if (rs1_val.is_nan() || rs1_val.is_positive_infinity()) {
+        if rs1_val.is_nan() || rs1_val.is_positive_infinity() {
             self.regs.write(inst.get_rd(), i64::MAX as AddressType);
         } else {
             self.regs.write(inst.get_rd(), result as AddressType);
@@ -895,8 +894,8 @@ impl RVCore {
         flag.get();
         self.update_fflags(&flag);
 
-        if ((result.is_negative() && rs1_val.is_positive())
-            || (rs1_val.is_nan() && rs1_val.is_negative())) {
+        if (result.is_negative() && rs1_val.is_positive())
+            || (rs1_val.is_nan() && rs1_val.is_negative()) {
             self.regs.write(inst.get_rd(), i32::MAX as AddressType);
         } else {
             self.regs.write(inst.get_rd(), result as AddressType);
@@ -966,8 +965,8 @@ impl RVCore {
         } else if rs2_val.is_nan() {
             self.fregs.write(inst.get_rd(), rs1_val.to_f64(RoundingMode::TiesToEven));
         } else {
-            if ((rs1_val.is_positive_zero() && rs2_val.is_negative_zero())
-                || (rs1_val.is_negative_zero() && rs2_val.is_positive_zero())) {
+            if (rs1_val.is_positive_zero() && rs2_val.is_negative_zero())
+                || (rs1_val.is_negative_zero() && rs2_val.is_positive_zero()) {
                 self.fregs.write(inst.get_rd(), F64::positive_zero());
             } else if rs1_val.lt(rs2_val) {
                 self.fregs.write(inst.get_rd(), rs2_val.to_f64(RoundingMode::TiesToEven));
@@ -990,8 +989,8 @@ impl RVCore {
         } else if rs2_val.is_nan() {
             self.fregs.write(inst.get_rd(), rs1_val.to_f64(RoundingMode::TiesToEven));
         } else {
-            if ((rs1_val.is_positive_zero() && rs2_val.is_negative_zero())
-                || (rs1_val.is_negative_zero() && rs2_val.is_positive_zero())) {
+            if (rs1_val.is_positive_zero() && rs2_val.is_negative_zero())
+                || (rs1_val.is_negative_zero() && rs2_val.is_positive_zero()) {
                 self.fregs.write(inst.get_rd(), F64::negative_zero());
             } else if rs1_val.lt(rs2_val) {
                 self.fregs.write(inst.get_rd(), rs1_val.to_f64(RoundingMode::TiesToEven));
@@ -1091,7 +1090,7 @@ impl RVCore {
         let rs1_val = self.fregs.read(inst.get_rs1());
         let rs2_val = self.fregs.read(inst.get_rs2_stype());
         
-        if (rs1_val.is_signaling_nan() || rs2_val.is_signaling_nan()) {
+        if rs1_val.is_signaling_nan() || rs2_val.is_signaling_nan() {
             self.csregs.write(0x1, 0x10);
             self.regs.write(inst.get_rd(), 0);
         } else {
@@ -1107,7 +1106,7 @@ impl RVCore {
         let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
         let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
 
-        if (rs1_val.is_nan() || rs2_val.is_nan()) {
+        if rs1_val.is_nan() || rs2_val.is_nan() {
             self.csregs.write(0x1, 0x10);
             self.regs.write(inst.get_rd(), 0);
         } else {
@@ -1123,7 +1122,7 @@ impl RVCore {
         let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
         let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
 
-        if (rs1_val.is_nan() || rs2_val.is_nan()) {
+        if rs1_val.is_nan() || rs2_val.is_nan() {
             self.csregs.write(0x1, 0x10);
             self.regs.write(inst.get_rd(), 0);
         } else {
@@ -1211,7 +1210,7 @@ impl RVCore {
         flag.get();
         self.update_fflags(&flag);
 
-        if (rs1_val.is_positive_infinity() && rs2_val.is_positive_infinity()) {
+        if rs1_val.is_positive_infinity() && rs2_val.is_positive_infinity() {
             self.fregs.write(inst.get_rd(), F64::quiet_nan());
         } else {
             self.fregs.write(inst.get_rd(), result.to_f64(RoundingMode::TiesToEven));
@@ -1879,21 +1878,21 @@ mod tests {
         assert_eq!(0x8888 + 0xff, mem_stub.buffer.addr);
         assert_eq!([0x78].to_vec(), mem_stub.buffer.data);
     }
-
+*/
     #[test]
     fn test_inst_sd() {
-        let mut core: RVCore = RVCore::new();
-        let mut mem_stub: MemoryStub = Default::default();
-        core.bind_mem(&mut mem_stub);
+        let mut fixture = Fixture::new();
+        fixture.core.regs.write(1, 0x8888); // Address
+        fixture.core.inst_lw(&inst_lw_code(2, 1, 0x7f0));
 
-        core.regs.write(1, 0xffffff78); // Data
-        core.regs.write(2, 0x8888); // Address
-        core.inst_sd(&inst_sd_code(1, 2, 0xff));
-        assert_eq!(MemoryOperation::WRITE, mem_stub.buffer.op);
-        assert_eq!(0x8888 + 0xff, mem_stub.buffer.addr);
+        fixture.core.regs.write(1, 0xffffff78); // Data
+        fixture.core.regs.write(2, 0x8888); // Address
+        fixture.core.inst_sd(&inst_sd_code(1, 2, 0xff));
+        assert_eq!(MemoryOperation::WRITE, fixture.mem_stub.borrow().buffer.op);
+        assert_eq!(0x8888 + 0xff, fixture.mem_stub.borrow().buffer.addr);
         assert_eq!(
             [0x78, 0xff, 0xff, 0xff, 0, 0, 0, 0].to_vec(),
-            mem_stub.buffer.data
+            fixture.mem_stub.borrow().buffer.data
         );
     }
 
@@ -1917,7 +1916,6 @@ mod tests {
         assert_eq!(0xff, core.regs.read(1));
     }
 
-    */
     #[test]
     fn test_inst_srai() {
         let mut fixture = Fixture::new();

@@ -1,4 +1,4 @@
-use softfloat_wrapper::{Float, F32, F64, RoundingMode, ExceptionFlags};
+use softfloat_wrapper::F64;
 
 pub struct FRegisters {
     reg_bank: [F64; 32],
@@ -19,7 +19,7 @@ impl FRegisters {
         self.reg_bank[i] = val;
     }
 
-    fn name(i: usize) -> &'static str {
+    /*fn name(i: usize) -> &'static str {
         match i {
             0 => "ft0",
             1 => "ft1",
@@ -55,5 +55,5 @@ impl FRegisters {
             31 => "ft11",
             _ => "inalid fpr name",
         }
-    }
+    }*/
 }

@@ -2,20 +2,13 @@ use crate::rv_core::inst_info::InstID;
 use crate::rv_core::inst_type::InstType;
 
 type AddressType = u64;
-enum ArchType {
-    RV32,
-    RV64,
-}
 
 pub struct InstDecoder {
-    arch: ArchType,
 }
 
 impl InstDecoder {
     pub fn new() -> InstDecoder {
-        InstDecoder {
-            arch: ArchType::RV64,
-        }
+        InstDecoder {}
     }
 
     pub fn decode(&self, inst_bytes: AddressType) -> InstType {
@@ -52,10 +45,7 @@ impl InstDecoder {
             },
             0x1 => match funct3 {
                 0x0 => inst.id = InstID::C_ADDI,
-                0x1 => match self.arch {
-                    ArchType::RV32 => inst.id = InstID::C_JAL,
-                    ArchType::RV64 => inst.id = InstID::C_ADDIW,
-                },
+                0x1 => inst.id = InstID::C_ADDIW,
                 0x3 => {
                     let rd = inst.get_rd();
                     match rd {

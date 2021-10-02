@@ -3,7 +3,6 @@ type AddressType = u64;
 pub const FFLAGS: AddressType = 0x1;
 pub const FFLAGS_RW_MASK: AddressType = 0x1f;
 pub const FRM: AddressType = 0x2;
-pub const FRM_RW_MASK: AddressType = 0x1f;
 pub const FCSR: AddressType = 0x3;
 pub const FCSR_RW_MASK: AddressType = 0xff;
 pub const MTVEC: AddressType = 0x305;
@@ -40,19 +39,19 @@ impl CSRegisters {
             self.reg_bank[idx as usize] = val & FCSR_RW_MASK;
         } else if idx == FFLAGS {
             self.reg_bank[FCSR as usize] &= !FFLAGS_RW_MASK;
-            self.reg_bank[FCSR as usize] |= (val & FFLAGS_RW_MASK);
+            self.reg_bank[FCSR as usize] |= val & FFLAGS_RW_MASK;
         } else if idx == FRM {
             self.reg_bank[FCSR as usize] &= !(0x7 << 5);
-            self.reg_bank[FCSR as usize] |= (val << 5);
+            self.reg_bank[FCSR as usize] |= val << 5;
         } else {
             self.reg_bank[idx as usize] = val;
         }
         //println!("JC_DEBUG: write csr {}, val {:#x}", idx, val)
     }
 
-    fn name(idx: AddressType) -> &'static str {
+    /*fn name(idx: AddressType) -> &'static str {
         match idx {
             _ => "invalid gpr name",
         }
-    }
+    }*/
 }

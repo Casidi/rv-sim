@@ -238,23 +238,6 @@ pub mod tests {
         }
     }
 
-    pub fn inst_c_jal_code(imm: AddressType) -> InstType {
-        InstType {
-            data: 0x1
-                | (1 << 13)
-                | (((imm >> 11) & 1) << 12)
-                | (((imm >> 4) & 1) << 11)
-                | (((imm >> 8) & 3) << 9)
-                | (((imm >> 10) & 1) << 8)
-                | (((imm >> 6) & 1) << 7)
-                | (((imm >> 7) & 1) << 6)
-                | (((imm >> 1) & 7) << 3)
-                | (((imm >> 5) & 1) << 2),
-            len: 2,
-            id: InstID::C_JAL,
-        }
-    }
-
     pub fn inst_c_jr_code(rs1: AddressType) -> InstType {
         InstType {
             data: 0x2 | (0b100 << 13) | (rs1 << 7),

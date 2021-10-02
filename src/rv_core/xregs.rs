@@ -19,7 +19,7 @@ impl XRegisters {
         }
     }
 
-    fn name(i: usize) -> &'static str {
+    /*fn name(i: usize) -> &'static str {
         match i {
             0 => "zero",
             1 => "ra",
@@ -55,5 +55,5 @@ impl XRegisters {
             31 => "t6",
             _ => "invalid gpr name",
         }
-    }
+    }*/
 }

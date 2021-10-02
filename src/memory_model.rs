@@ -1,9 +1,6 @@
 use crate::memory_interface::{MemoryInterface, MemoryOperation, Payload};
 use std::collections::HashMap;
-//use std::convert::TryFrom;
-use std::cell::RefCell;
 use std::convert::TryInto;
-use std::rc::Rc;
 
 type AddressType = u64;
 
@@ -33,10 +30,7 @@ impl MemoryModel {
         }
     }
 
-    pub fn get_if(&mut self) -> Rc<RefCell<&mut dyn MemoryInterface>> {
-        Rc::new(RefCell::new(self))
-    }
-
+    #[cfg(test)]
     pub fn read_byte(&mut self, addr: AddressType) -> u8 {
         let mut value = vec![0; 1];
         self.do_access(addr, &mut value, MemoryOperation::READ);
