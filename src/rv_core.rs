@@ -132,6 +132,7 @@ impl RVCore {
             InstID::ECALL => self.inst_ecall(inst),
             InstID::FADD_D => self.inst_fadd_d(inst),
             InstID::FADD_S => self.inst_fadd_s(inst),
+            InstID::FCLASS_D => self.inst_fclass_d(inst),
             InstID::FCLASS_S => self.inst_fclass_s(inst),
             InstID::FCVT_L_S => self.inst_fcvt_l_s(inst),
             InstID::FCVT_LU_S => self.inst_fcvt_lu_s(inst),
@@ -153,15 +154,19 @@ impl RVCore {
             InstID::FSGNJN_S => self.inst_fsgnjn_s(inst),
             InstID::FSGNJX_S => self.inst_fsgnjx_s(inst),
             InstID::FENCE => self.inst_fence(inst),
+            InstID::FEQ_D => self.inst_feq_d(inst),
             InstID::FEQ_S => self.inst_feq_s(inst),
             InstID::FLD => self.inst_fld(inst),
+            InstID::FLE_D => self.inst_fle_d(inst),
             InstID::FLE_S => self.inst_fle_s(inst),
+            InstID::FLT_D => self.inst_flt_d(inst),
             InstID::FLT_S => self.inst_flt_s(inst),
             InstID::FLW => self.inst_flw(inst),
             InstID::FSD => self.inst_fsd(inst),
             InstID::FSW => self.inst_fsw(inst),
             InstID::FMUL_D => self.inst_fmul_d(inst),
             InstID::FMUL_S => self.inst_fmul_s(inst),
+            InstID::FMV_D_X => self.inst_fmv_d_x(inst),
             InstID::FMV_W_X => self.inst_fmv_w_x(inst),
             InstID::FMV_X_D => self.inst_fmv_x_d(inst),
             InstID::FMV_X_W => self.inst_fmv_x_w(inst),
@@ -841,6 +846,34 @@ impl RVCore {
             .write(inst.get_rd(), result.to_f64(RoundingMode::TiesToEven));
     }
 
+    fn inst_fclass_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self
+            .fregs
+            .read(inst.get_rs1());
+        let f64_val = self.fregs.read(inst.get_rs1());
+        if rs1_val.is_negative_infinity() {
+            self.regs.write(inst.get_rd(), 1 << 0);
+        } else if rs1_val.is_negative_normal() {
+            self.regs.write(inst.get_rd(), 1 << 1);
+        } else if rs1_val.is_negative_subnormal() {
+            self.regs.write(inst.get_rd(), 1 << 2);
+        } else if rs1_val.is_negative_zero() {
+            self.regs.write(inst.get_rd(), 1 << 3);
+        } else if rs1_val.is_positive_zero() {
+            self.regs.write(inst.get_rd(), 1 << 4);
+        } else if rs1_val.is_positive_subnormal() {
+            self.regs.write(inst.get_rd(), 1 << 5);
+        } else if rs1_val.is_positive_normal() {
+            self.regs.write(inst.get_rd(), 1 << 6);
+        } else if rs1_val.is_positive_infinity() {
+            self.regs.write(inst.get_rd(), 1 << 7);
+        } else if f64_val.is_signaling_nan() {
+            self.regs.write(inst.get_rd(), 1 << 8);
+        } else if rs1_val.is_nan() {
+            self.regs.write(inst.get_rd(), 1 << 9);
+        }
+    }
+
     fn inst_fclass_s(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self
             .fregs
@@ -1191,9 +1224,23 @@ impl RVCore {
 
     fn inst_fence(&mut self, _inst: &inst_type::InstType) {}
 
+    fn inst_feq_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.fregs.read(inst.get_rs1());
+        let rs2_val = self.fregs.read(inst.get_rs2_stype());
+
+        if rs1_val.is_signaling_nan() || rs2_val.is_signaling_nan() {
+            self.csregs.write(0x1, 0x10);
+            self.regs.write(inst.get_rd(), 0);
+        } else {
+            if rs1_val.eq(rs2_val) {
+                self.regs.write(inst.get_rd(), 1);
+            } else {
+                self.regs.write(inst.get_rd(), 0);
+            }
+        }
+    }
+
     fn inst_feq_s(&mut self, inst: &inst_type::InstType) {
-        //let rs1_val = self.fregs.read(inst.get_rs1()).to_f32(RoundingMode::TiesToEven);
-        //let rs2_val = self.fregs.read(inst.get_rs2_stype()).to_f32(RoundingMode::TiesToEven);
         let rs1_val = self.fregs.read(inst.get_rs1());
         let rs2_val = self.fregs.read(inst.get_rs2_stype());
 
@@ -1226,6 +1273,26 @@ impl RVCore {
         }
     }
 
+    fn inst_fle_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self
+            .fregs
+            .read(inst.get_rs1());
+        let rs2_val = self
+            .fregs
+            .read(inst.get_rs2_stype());
+
+        if rs1_val.is_nan() || rs2_val.is_nan() {
+            self.csregs.write(0x1, 0x10);
+            self.regs.write(inst.get_rd(), 0);
+        } else {
+            if rs1_val.le(rs2_val) {
+                self.regs.write(inst.get_rd(), 1);
+            } else {
+                self.regs.write(inst.get_rd(), 0);
+            }
+        }
+    }
+
     fn inst_fle_s(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self
             .fregs
@@ -1241,6 +1308,26 @@ impl RVCore {
             self.regs.write(inst.get_rd(), 0);
         } else {
             if rs1_val.le(rs2_val) {
+                self.regs.write(inst.get_rd(), 1);
+            } else {
+                self.regs.write(inst.get_rd(), 0);
+            }
+        }
+    }
+
+    fn inst_flt_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self
+            .fregs
+            .read(inst.get_rs1());
+        let rs2_val = self
+            .fregs
+            .read(inst.get_rs2_stype());
+
+        if rs1_val.is_nan() || rs2_val.is_nan() {
+            self.csregs.write(0x1, 0x10);
+            self.regs.write(inst.get_rd(), 0);
+        } else {
+            if rs1_val.lt(rs2_val) {
                 self.regs.write(inst.get_rd(), 1);
             } else {
                 self.regs.write(inst.get_rd(), 0);
@@ -1351,6 +1438,20 @@ impl RVCore {
 
         self.fregs
             .write(inst.get_rd(), result.to_f64(RoundingMode::TiesToEven));
+    }
+
+    fn inst_fmv_d_x(&mut self, inst: &inst_type::InstType) {
+        let rs1 = inst.get_rs1();
+        let rs1_val = self.regs.read(rs1);
+
+        let f64_val = F64::from_bits(rs1_val);
+        if f64_val.is_signaling_nan() {
+            self.fregs
+                .write(inst.get_rd(), F64::from_bits(0x7ff0000000000001));
+        } else {
+            self.fregs
+                .write(inst.get_rd(), f64_val);
+        }
     }
 
     fn inst_fmv_w_x(&mut self, inst: &inst_type::InstType) {

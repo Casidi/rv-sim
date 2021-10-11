@@ -297,6 +297,12 @@ impl InstDecoder {
                         0x2 => inst.id = InstID::FEQ_S,
                         _ => self.dump_invalid_inst(inst),
                     },
+                    0x51 => match funct3 {
+                        0x0 => inst.id = InstID::FLE_D,
+                        0x1 => inst.id = InstID::FLT_D,
+                        0x2 => inst.id = InstID::FEQ_D,
+                        _ => self.dump_invalid_inst(inst),
+                    },
                     0x60 => {
                         let rs2 = (inst_bytes >> 20) & 0x1f;
                         match rs2 {
@@ -322,11 +328,13 @@ impl InstDecoder {
                         0x1 => inst.id = InstID::FCLASS_S,
                         _ => self.dump_invalid_inst(inst),
                     },
-                    0x71 => match inst.get_rs2_stype() {
-                        0 => inst.id = InstID::FMV_X_D,
+                    0x71 => match (inst.get_rs2_stype(), funct3) {
+                        (0, 0) => inst.id = InstID::FMV_X_D,
+                        (0, 1) => inst.id = InstID::FCLASS_D,
                         _ => self.dump_invalid_inst(inst),
                     },
                     0x78 => inst.id = InstID::FMV_W_X,
+                    0x79 => inst.id = InstID::FMV_D_X,
                     _ => self.dump_invalid_inst(inst),
                 }
             }
