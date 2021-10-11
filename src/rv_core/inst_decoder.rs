@@ -290,6 +290,8 @@ impl InstDecoder {
                             inst.id = InstID::FMAX_S;
                         }
                     }
+                    0x20 => inst.id = InstID::FCVT_S_D,
+                    0x21 => inst.id = InstID::FCVT_D_S,
                     0x2c => inst.id = InstID::FSQRT_S,
                     0x50 => match funct3 {
                         0x0 => inst.id = InstID::FLE_S,
@@ -320,6 +322,16 @@ impl InstDecoder {
                             0x1 => inst.id = InstID::FCVT_S_WU,
                             0x2 => inst.id = InstID::FCVT_S_L,
                             0x3 => inst.id = InstID::FCVT_S_LU,
+                            _ => self.dump_invalid_inst(inst),
+                        }
+                    }
+                    0x69 => {
+                        let rs2 = (inst_bytes >> 20) & 0x1f;
+                        match rs2 {
+                            0x0 => inst.id = InstID::FCVT_D_W,
+                            0x1 => inst.id = InstID::FCVT_D_WU,
+                            0x2 => inst.id = InstID::FCVT_D_L,
+                            0x3 => inst.id = InstID::FCVT_D_LU,
                             _ => self.dump_invalid_inst(inst),
                         }
                     }
