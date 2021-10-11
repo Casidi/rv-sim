@@ -130,6 +130,7 @@ impl RVCore {
             InstID::DIVUW => self.inst_divuw(inst),
             InstID::DIVW => self.inst_divw(inst),
             InstID::ECALL => self.inst_ecall(inst),
+            InstID::FADD_D => self.inst_fadd_d(inst),
             InstID::FADD_S => self.inst_fadd_s(inst),
             InstID::FCLASS_S => self.inst_fclass_s(inst),
             InstID::FCVT_L_S => self.inst_fcvt_l_s(inst),
@@ -153,13 +154,18 @@ impl RVCore {
             InstID::FSGNJX_S => self.inst_fsgnjx_s(inst),
             InstID::FENCE => self.inst_fence(inst),
             InstID::FEQ_S => self.inst_feq_s(inst),
+            InstID::FLD => self.inst_fld(inst),
             InstID::FLE_S => self.inst_fle_s(inst),
             InstID::FLT_S => self.inst_flt_s(inst),
             InstID::FLW => self.inst_flw(inst),
+            InstID::FSD => self.inst_fsd(inst),
             InstID::FSW => self.inst_fsw(inst),
+            InstID::FMUL_D => self.inst_fmul_d(inst),
             InstID::FMUL_S => self.inst_fmul_s(inst),
             InstID::FMV_W_X => self.inst_fmv_w_x(inst),
+            InstID::FMV_X_D => self.inst_fmv_x_d(inst),
             InstID::FMV_X_W => self.inst_fmv_x_w(inst),
+            InstID::FSUB_D => self.inst_fsub_d(inst),
             InstID::FSUB_S => self.inst_fsub_s(inst),
             InstID::JAL => self.inst_jal(inst),
             InstID::JALR => self.inst_jalr(inst),
@@ -798,6 +804,23 @@ impl RVCore {
         //panic!("ECALL: Exceptions are not supported now");
     }
 
+    fn inst_fadd_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self
+            .fregs
+            .read(inst.get_rs1());
+        let rs2_val = self
+            .fregs
+            .read(inst.get_rs2_stype());
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.add(rs2_val, RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
+
+        self.fregs.write(inst.get_rd(), result);
+    }
+
     fn inst_fadd_s(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self
             .fregs
@@ -1186,6 +1209,23 @@ impl RVCore {
         }
     }
 
+    fn inst_fld(&mut self, inst: &inst_type::InstType) {
+        let base = self.regs.read(inst.get_rs1());
+        let offset = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        let addr = base.wrapping_add(offset);
+        let mut data = [0; 8];
+        self.read_memory(addr, &mut data);
+
+        let f64_val = F64::from_bits(u64::from_le_bytes(data));
+        if f64_val.is_signaling_nan() || u64::from_le_bytes(data) == 0x7f800001 {
+            self.fregs
+                .write(inst.get_rd(), F64::from_bits(0x7ff0000000000001));
+        } else {
+            self.fregs
+                .write(inst.get_rd(), f64_val);
+        }
+    }
+
     fn inst_fle_s(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self
             .fregs
@@ -1247,6 +1287,17 @@ impl RVCore {
         }
     }
 
+    fn inst_fsd(&mut self, inst: &inst_type::InstType) {
+        let base = self.regs.read(inst.get_rs1());
+        let offset = RVCore::sign_extend(inst.get_imm_btype(), 12);
+        let addr = base.wrapping_add(offset);
+        let data = self
+            .fregs
+            .read(inst.get_rs2_stype())
+            .to_bits();
+        self.write_memory(addr, &data.to_le_bytes());
+    }
+
     fn inst_fsw(&mut self, inst: &inst_type::InstType) {
         let base = self.regs.read(inst.get_rs1());
         let offset = RVCore::sign_extend(inst.get_imm_btype(), 12);
@@ -1257,6 +1308,26 @@ impl RVCore {
             .to_f32(RoundingMode::TiesToEven)
             .to_bits();
         self.write_memory(addr, &data.to_le_bytes());
+    }
+
+    fn inst_fmul_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self
+            .fregs
+            .read(inst.get_rs1());
+        let rs2_val = self
+            .fregs
+            .read(inst.get_rs2_stype());
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.mul(rs2_val, RoundingMode::TiesToEven);
+        flag.get();
+
+        if flag.is_inexact() {
+            self.csregs.write(csregs::FFLAGS, 1);
+        }
+
+        self.fregs.write(inst.get_rd(), result);
     }
 
     fn inst_fmul_s(&mut self, inst: &inst_type::InstType) {
@@ -1296,6 +1367,12 @@ impl RVCore {
         }
     }
 
+    fn inst_fmv_x_d(&mut self, inst: &inst_type::InstType) {
+        let rs1 = inst.get_rs1();
+        let rs1_val = self.fregs.read(rs1);
+        self.regs.write(inst.get_rd(), rs1_val.to_bits());
+    }
+
     fn inst_fmv_x_w(&mut self, inst: &inst_type::InstType) {
         let rs1 = inst.get_rs1();
         let rs1_val = self.fregs.read(rs1);
@@ -1306,6 +1383,27 @@ impl RVCore {
                 32,
             ),
         );
+    }
+
+    fn inst_fsub_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self
+            .fregs
+            .read(inst.get_rs1());
+        let rs2_val = self
+            .fregs
+            .read(inst.get_rs2_stype());
+
+        let mut flag = ExceptionFlags::default();
+        flag.set();
+        let result = rs1_val.sub(rs2_val, RoundingMode::TiesToEven);
+        flag.get();
+        self.update_fflags(&flag);
+
+        if rs1_val.is_positive_infinity() && rs2_val.is_positive_infinity() {
+            self.fregs.write(inst.get_rd(), F64::quiet_nan());
+        } else {
+            self.fregs.write(inst.get_rd(), result);
+        }
     }
 
     fn inst_fsub_s(&mut self, inst: &inst_type::InstType) {

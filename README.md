@@ -19,11 +19,11 @@ A RISC-V instruction-accurate simulator
 - [x] Support all RV64I instructions
 - [x] Complete and test all RV64I instructions
 - [x] Pass rv64uc-p-rvc to ensure the quality of RV64C instructions
-- [ ] Pass rv64uf-p-* tests
-- [ ] Pass rv64ua-p-* tests
+- [x] Pass rv64uf-p-* tests
 - [ ] Pass rv64ud-p-* tests
+- [ ] Pass rv64ua-p-* tests
 - [ ] Refactor: implement extract_bits function to simplify inst decoding
-- [ ] (68/124) Pass all rv64*-p-* tests
+- [ ] (79/124) Pass all rv64*-p-* tests
 - [ ] Pass all benchmarks in riscv-tests
 - [ ] (/) Able to run coremark, match pctrace to Spike
     - RV porting of cormark: [riscv-coremark](https://github.com/riscv-boom/riscv-coremark)
