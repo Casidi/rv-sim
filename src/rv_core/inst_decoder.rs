@@ -263,10 +263,38 @@ impl InstDecoder {
                 0x7 => inst.id = InstID::REMUW,
                 _ => self.dump_invalid_inst(inst),
             },
-            0x43 => inst.id = InstID::FMADD_S,
-            0x47 => inst.id = InstID::FMSUB_S,
-            0x4b => inst.id = InstID::FNMSUB_S,
-            0x4f => inst.id = InstID::FNMADD_S,
+            0x43 => {
+                let funct2 = (inst_bytes >> 25) & 0x3;
+                match funct2 {
+                    0 => inst.id = InstID::FMADD_S,
+                    1 => inst.id = InstID::FMADD_D,
+                    _ => self.dump_invalid_inst(inst),
+                }
+            }
+            0x47 => {
+                let funct2 = (inst_bytes >> 25) & 0x3;
+                match funct2 {
+                    0 => inst.id = InstID::FMSUB_S,
+                    1 => inst.id = InstID::FMSUB_D,
+                    _ => self.dump_invalid_inst(inst),
+                }
+            }
+            0x4b => {
+                let funct2 = (inst_bytes >> 25) & 0x3;
+                match funct2 {
+                    0 => inst.id = InstID::FNMSUB_S,
+                    1 => inst.id = InstID::FNMSUB_D,
+                    _ => self.dump_invalid_inst(inst),
+                }
+            }
+            0x4f => {
+                let funct2 = (inst_bytes >> 25) & 0x3;
+                match funct2 {
+                    0 => inst.id = InstID::FNMADD_S,
+                    1 => inst.id = InstID::FNMADD_D,
+                    _ => self.dump_invalid_inst(inst),
+                }
+            }
             0x53 => {
                 let funct7 = (inst_bytes >> 25) & 0x7f;
                 match funct7 {
@@ -277,10 +305,17 @@ impl InstDecoder {
                     0x8 => inst.id = InstID::FMUL_S,
                     0x9 => inst.id = InstID::FMUL_D,
                     0xc => inst.id = InstID::FDIV_S,
+                    0xd => inst.id = InstID::FDIV_D,
                     0x10 => match funct3 {
                         0x0 => inst.id = InstID::FSGNJ_S,
                         0x1 => inst.id = InstID::FSGNJN_S,
                         0x2 => inst.id = InstID::FSGNJX_S,
+                        _ => self.dump_invalid_inst(inst),
+                    },
+                    0x11 => match funct3 {
+                        0x0 => inst.id = InstID::FSGNJ_D,
+                        0x1 => inst.id = InstID::FSGNJN_D,
+                        0x2 => inst.id = InstID::FSGNJX_D,
                         _ => self.dump_invalid_inst(inst),
                     },
                     0x14 => {
@@ -290,9 +325,17 @@ impl InstDecoder {
                             inst.id = InstID::FMAX_S;
                         }
                     }
+                    0x15 => {
+                        if funct3 == 0 {
+                            inst.id = InstID::FMIN_D;
+                        } else {
+                            inst.id = InstID::FMAX_D;
+                        }
+                    }
                     0x20 => inst.id = InstID::FCVT_S_D,
                     0x21 => inst.id = InstID::FCVT_D_S,
                     0x2c => inst.id = InstID::FSQRT_S,
+                    0x2d => inst.id = InstID::FSQRT_D,
                     0x50 => match funct3 {
                         0x0 => inst.id = InstID::FLE_S,
                         0x1 => inst.id = InstID::FLT_S,

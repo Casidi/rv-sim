@@ -19,6 +19,7 @@ pub struct Payload {
     pub addr: AddressType,
     pub data: Vec<u8>,
     pub op: MemoryOperation,
+    pub is_amo: bool,
 }
 
 pub trait MemoryInterface {

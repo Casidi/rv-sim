@@ -54,7 +54,7 @@ fn main() {
     core.bind_mem(mem_if.clone());
     core.pc = 0x1000;
 
-    for _i in 0..80 {
+    for _i in 0..100 {
         core.run(5000);
         let tohost = mem.borrow_mut().read_word(elf_info.tohost_addr) as u64;
         if tohost != 0 {
