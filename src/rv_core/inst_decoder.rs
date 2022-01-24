@@ -160,6 +160,40 @@ impl InstDecoder {
                 0x3 => inst.id = InstID::FSD,
                 _ => self.dump_invalid_inst(inst),
             }
+            0x2f => {
+                let funct7 = (inst_bytes >> 27) & 0x1f;
+                match funct3 {
+                    0x2 => match funct7 {
+                        0x0 => inst.id = InstID::AMOADD_W,
+                        0x1 => inst.id = InstID::AMOSWAP_W,
+                        0x2 => inst.id = InstID::LR_W,
+                        0x3 => inst.id = InstID::SC_W,
+                        0x4 => inst.id = InstID::AMOXOR_W,
+                        0x8 => inst.id = InstID::AMOMIN_W,
+                        0xc => inst.id = InstID::AMOAND_W,
+                        0x10 => inst.id = InstID::AMOMAX_W,
+                        0x14 => inst.id = InstID::AMOOR_W,
+                        0x18 => inst.id = InstID::AMOMINU_W,
+                        0x1c => inst.id = InstID::AMOMAXU_W,
+                        _ => self.dump_invalid_inst(inst),
+                    }
+                    0x3 => match funct7 {
+                        0x0 => inst.id = InstID::AMOADD_D,
+                        0x1 => inst.id = InstID::AMOSWAP_D,
+                        0x2 => inst.id = InstID::LR_D,
+                        0x3 => inst.id = InstID::SC_D,
+                        0x4 => inst.id = InstID::AMOXOR_D,
+                        0x8 => inst.id = InstID::AMOMIN_D,
+                        0xc => inst.id = InstID::AMOAND_D,
+                        0x10 => inst.id = InstID::AMOMAX_D,
+                        0x14 => inst.id = InstID::AMOOR_D,
+                        0x18 => inst.id = InstID::AMOMINU_D,
+                        0x1c => inst.id = InstID::AMOMAXU_D,
+                        _ => self.dump_invalid_inst(inst),
+                    }
+                    _ => self.dump_invalid_inst(inst),
+                }
+            }
             0x33 => match funct3 {
                 0x0 => {
                     let funct7 = (inst_bytes >> 25) & 0x7f;

@@ -9,6 +9,7 @@ use crate::rv_core::inst_info::InstID;
 use std::cell::RefCell;
 use std::convert::TryInto;
 use std::rc::Rc;
+use std::cmp;
 
 use softfloat_wrapper::{ExceptionFlags, Float, RoundingMode, F32, F64};
 
@@ -81,6 +82,24 @@ impl RVCore {
             InstID::ADDI => self.inst_addi(inst),
             InstID::ADDIW => self.inst_addiw(inst),
             InstID::ADDW => self.inst_addw(inst),
+            InstID::AMOADD_D => self.inst_amoadd_d(inst),
+            InstID::AMOADD_W => self.inst_amoadd_w(inst),
+            InstID::AMOAND_D => self.inst_amoand_d(inst),
+            InstID::AMOAND_W => self.inst_amoand_w(inst),
+            InstID::AMOMAX_D => self.inst_amomax_d(inst),
+            InstID::AMOMAX_W => self.inst_amomax_w(inst),
+            InstID::AMOMAXU_D => self.inst_amomaxu_d(inst),
+            InstID::AMOMAXU_W => self.inst_amomaxu_w(inst),
+            InstID::AMOMIN_D => self.inst_amomin_d(inst),
+            InstID::AMOMIN_W => self.inst_amomin_w(inst),
+            InstID::AMOMINU_D => self.inst_amominu_d(inst),
+            InstID::AMOMINU_W => self.inst_amominu_w(inst),
+            InstID::AMOOR_D => self.inst_amoor_d(inst),
+            InstID::AMOOR_W => self.inst_amoor_w(inst),
+            InstID::AMOSWAP_D => self.inst_amoswap_d(inst),
+            InstID::AMOSWAP_W => self.inst_amoswap_w(inst),
+            InstID::AMOXOR_D => self.inst_amoxor_d(inst),
+            InstID::AMOXOR_W => self.inst_amoxor_w(inst),
             InstID::AND => self.inst_and(inst),
             InstID::ANDI => self.inst_andi(inst),
             InstID::BEQ => self.inst_beq(inst),
@@ -200,6 +219,8 @@ impl RVCore {
             InstID::LD => self.inst_ld(inst),
             InstID::LH => self.inst_lh(inst),
             InstID::LHU => self.inst_lhu(inst),
+            InstID::LR_D => self.inst_lr_d(inst),
+            InstID::LR_W => self.inst_lr_w(inst),
             InstID::LUI => self.inst_lui(inst),
             InstID::LW => self.inst_lw(inst),
             InstID::LWU => self.inst_lwu(inst),
@@ -216,6 +237,8 @@ impl RVCore {
             InstID::REMUW => self.inst_remuw(inst),
             InstID::REMW => self.inst_remw(inst),
             InstID::SB => self.inst_sb(inst),
+            InstID::SC_D => self.inst_sc_d(inst),
+            InstID::SC_W => self.inst_sc_w(inst),
             InstID::SD => self.inst_sd(inst),
             InstID::SH => self.inst_sh(inst),
             InstID::SW => self.inst_sw(inst),
@@ -252,26 +275,28 @@ impl RVCore {
         }
     }
 
-    fn write_memory(&mut self, address: AddressType, data: &[u8]) {
-        let mut payload = Payload {
-            addr: address,
-            data: data.to_vec(),
-            op: MemoryOperation::WRITE,
-            is_amo: false,
-        };
-        self.mem_if
-            .as_mut()
-            .unwrap()
-            .borrow_mut()
-            .access_memory(&mut payload);
+    fn write_memory(&mut self, address: AddressType, data: &mut [u8]) {
+        self.access_memory(address, data, MemoryOperation::WRITE, false);
     }
 
     fn read_memory(&mut self, address: AddressType, data: &mut [u8]) {
+        self.access_memory(address, data, MemoryOperation::READ, false);
+    }
+
+    fn write_memory_amo(&mut self, address: AddressType, data: &mut [u8]) {
+        self.access_memory(address, data, MemoryOperation::WRITE, true);
+    }
+
+    fn read_memory_amo(&mut self, address: AddressType, data: &mut [u8]) {
+        self.access_memory(address, data, MemoryOperation::READ, true);
+    }
+
+    fn access_memory(&mut self, addr_in: AddressType, data_in: &mut [u8], op_in: MemoryOperation, is_amo_in: bool) {
         let mut payload = Payload {
-            addr: address,
-            data: data.to_vec(),
-            op: MemoryOperation::READ,
-            is_amo: false,
+            addr: addr_in,
+            data: data_in.to_vec(),
+            op: op_in,
+            is_amo: is_amo_in,
         };
         self.mem_if
             .as_mut()
@@ -279,8 +304,10 @@ impl RVCore {
             .borrow_mut()
             .access_memory(&mut payload);
 
-        for i in 0..data.len() {
-            data[i] = payload.data[i];
+        if op_in == MemoryOperation::READ {
+            for i in 0..data_in.len() {
+                data_in[i] = payload.data[i];
+            }
         }
     }
 
@@ -347,6 +374,240 @@ impl RVCore {
         let rs2_val = self.regs.read(inst.get_rs2_rtype());
         let result = RVCore::sign_extend(rs1_val.wrapping_add(rs2_val) as u32 as u64, 32);
         self.regs.write(inst.get_rd(), result);
+    }
+
+    fn inst_amoadd_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 8];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rdata.wrapping_add(rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amoadd_w(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 4];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rdata.wrapping_add(rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amoand_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 8];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rdata & rs2_val;
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amoand_w(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 4];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rdata & rs2_val;
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amomax_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 8];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = cmp::max(rdata, rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amomax_w(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 4];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = cmp::max(rdata, rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amomaxu_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 8];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = cmp::max(rdata, rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amomaxu_w(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 4];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = cmp::max(rdata, rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amomin_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 8];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = cmp::min(rdata, rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amomin_w(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 4];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = cmp::min(rdata, rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amominu_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 8];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = cmp::min(rdata, rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amominu_w(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 4];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = cmp::min(rdata, rs2_val);
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amoor_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 8];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rdata | rs2_val;
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amoor_w(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 4];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rdata | rs2_val;
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amoswap_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 8];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rs2_val;
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amoswap_w(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 4];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rs2_val;
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amoxor_d(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 8];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rdata ^ rs2_val;
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
+    }
+
+    fn inst_amoxor_w(&mut self, inst: &inst_type::InstType) {
+        let rs1_val = self.regs.read(inst.get_rs1());
+        let rs2_val = self.regs.read(inst.get_rs2_rtype());
+        
+        let mut data = [0; 4];
+        self.read_memory_amo(rs1_val, &mut data);
+        let rdata = RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32);
+        self.regs.write(inst.get_rd(), rdata);
+
+        let result = rdata ^ rs2_val;
+        self.write_memory_amo(rs1_val, &mut result.to_le_bytes());
     }
 
     fn inst_and(&mut self, inst: &inst_type::InstType) {
@@ -549,7 +810,7 @@ impl RVCore {
         let imm = inst.get_imm_css();
         let address = self.regs.read(2) + (((imm & 0x7) << 6) | (imm & 0x38));
         let data = self.fregs.read(inst.get_rs2());
-        self.write_memory(address, &(data.to_bits().to_le_bytes()));
+        self.write_memory(address, &mut (data.to_bits().to_le_bytes()));
     }
 
     fn inst_c_j(&mut self, inst: &inst_type::InstType) {
@@ -601,7 +862,7 @@ impl RVCore {
         let imm = inst.get_imm_css();
         let address = self.regs.read(2) + (((imm & 0x7) << 6) | (imm & 0x38));
         let data = self.regs.read(inst.get_rs2()) as u64;
-        self.write_memory(address, &data.to_le_bytes());
+        self.write_memory(address, &mut data.to_le_bytes());
     }
 
     fn inst_c_slli(&mut self, inst: &inst_type::InstType) {
@@ -628,14 +889,14 @@ impl RVCore {
         let offset = (((imm >> 2) & 0x7) << 3) | (((imm >> 1) & 1) << 2) | (((imm >> 0) & 1) << 6);
         let address = self.regs.read(inst.get_rs1_3b()) + offset;
         let data = self.regs.read(inst.get_rs2_3b()) as u32;
-        self.write_memory(address, &data.to_le_bytes());
+        self.write_memory(address, &mut data.to_le_bytes());
     }
 
     fn inst_c_swsp(&mut self, inst: &inst_type::InstType) {
         let imm = inst.get_imm_css();
         let address = self.regs.read(2) + (((imm & 0x3) << 6) | (imm & 0x3c));
         let data = self.regs.read(inst.get_rs2()) as u32;
-        self.write_memory(address, &data.to_le_bytes());
+        self.write_memory(address, &mut data.to_le_bytes());
     }
 
     fn inst_c_ld(&mut self, inst: &inst_type::InstType) {
@@ -699,7 +960,7 @@ impl RVCore {
         let offset = (((imm_cs >> 2) & 0x7) << 3) | (((imm_cs >> 0) & 0x3) << 6);
         let address = self.regs.read(inst.get_rs1_3b()) + offset;
         let data = self.regs.read(inst.get_rs2_3b());
-        self.write_memory(address, &data.to_le_bytes());
+        self.write_memory(address, &mut data.to_le_bytes());
     }
 
     fn inst_c_sub(&mut self, inst: &inst_type::InstType) {
@@ -1725,7 +1986,7 @@ impl RVCore {
             .fregs
             .read(inst.get_rs2_stype())
             .to_bits();
-        self.write_memory(addr, &data.to_le_bytes());
+        self.write_memory(addr, &mut data.to_le_bytes());
     }
 
     fn inst_fsw(&mut self, inst: &inst_type::InstType) {
@@ -1737,7 +1998,7 @@ impl RVCore {
             .read(inst.get_rs2_stype())
             .to_f32(RoundingMode::TiesToEven)
             .to_bits();
-        self.write_memory(addr, &data.to_le_bytes());
+        self.write_memory(addr, &mut data.to_le_bytes());
     }
 
     fn inst_fmul_d(&mut self, inst: &inst_type::InstType) {
@@ -1948,6 +2209,26 @@ impl RVCore {
         self.regs.write(inst.get_rd(), wdata);
     }
 
+    fn inst_lr_d(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
+        let mut data = [0; 8];
+        self.read_memory_amo(address, &mut data);
+        let wdata = RVCore::byte_array_to_addr_type(&data) as AddressType;
+        self.regs.write(inst.get_rd(), wdata);
+    }
+
+    fn inst_lr_w(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
+        let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
+        let mut data = [0; 4];
+        self.read_memory_amo(address, &mut data);
+        self.regs.write(
+            inst.get_rd(),
+            RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 32),
+        );
+    }
+
     fn inst_lui(&mut self, inst: &inst_type::InstType) {
         self.regs
             .write(inst.get_rd(), RVCore::sign_extend(inst.get_imm_utype(), 32));
@@ -2084,28 +2365,42 @@ impl RVCore {
         let imm = RVCore::sign_extend(inst.get_imm_stype(), 12);
         let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
         let data = self.regs.read(inst.get_rs2_stype()) as u8;
-        self.write_memory(address, &data.to_le_bytes());
+        self.write_memory(address, &mut data.to_le_bytes());
+    }
+
+    fn inst_sc_d(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_stype(), 12);
+        let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
+        let data = self.regs.read(inst.get_rs2_stype()) as u64;
+        self.write_memory_amo(address, &mut data.to_le_bytes());
+    }
+
+    fn inst_sc_w(&mut self, inst: &inst_type::InstType) {
+        let imm = RVCore::sign_extend(inst.get_imm_stype(), 12);
+        let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
+        let data = self.regs.read(inst.get_rs2_stype()) as u32;
+        self.write_memory_amo(address, &mut data.to_le_bytes());
     }
 
     fn inst_sd(&mut self, inst: &inst_type::InstType) {
         let imm = RVCore::sign_extend(inst.get_imm_stype(), 12);
         let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
         let data = self.regs.read(inst.get_rs2_stype()) as u64;
-        self.write_memory(address, &data.to_le_bytes());
+        self.write_memory(address, &mut data.to_le_bytes());
     }
 
     fn inst_sh(&mut self, inst: &inst_type::InstType) {
         let imm = RVCore::sign_extend(inst.get_imm_stype(), 12);
         let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
         let data = self.regs.read(inst.get_rs2_stype()) as u16;
-        self.write_memory(address, &data.to_le_bytes());
+        self.write_memory(address, &mut data.to_le_bytes());
     }
 
     fn inst_sw(&mut self, inst: &inst_type::InstType) {
         let imm = RVCore::sign_extend(inst.get_imm_stype(), 12);
         let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
         let data = self.regs.read(inst.get_rs2_stype()) as u32;
-        self.write_memory(address, &data.to_le_bytes());
+        self.write_memory(address, &mut data.to_le_bytes());
     }
 
     fn inst_sll(&mut self, inst: &inst_type::InstType) {
