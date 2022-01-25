@@ -2154,21 +2154,35 @@ impl RVCore {
     }
 
     fn inst_jalr(&mut self, inst: &inst_type::InstType) {
+        let old_pc = self.pc;
         let rs1_val = self.regs.read(inst.get_rs1());
-        self.regs.write(inst.get_rd(), self.pc + 4);
+        self.regs.write(inst.get_rd(), old_pc + 4);
         let offset = RVCore::sign_extend(inst.get_imm_itype(), 12);
         self.pc = ((rs1_val.wrapping_add(offset)) & (AddressType::max_value() - 1)) - inst.len;
+        //Hack for illegal address exception
+        if (self.pc >> 63) == 1 {
+            self.pc = self.csregs.read(csregs::MTVEC) - inst.len;
+            self.csregs.write(csregs::MCAUSE, csregs::EXC_FETCH_ACCESS);
+            self.csregs.write(csregs::MEPC, old_pc + 4);
+        }
     }
 
     fn inst_lb(&mut self, inst: &inst_type::InstType) {
         let imm = RVCore::sign_extend(inst.get_imm_itype(), 12);
         let address = self.regs.read(inst.get_rs1()).wrapping_add(imm);
         let mut data = [0; 1];
-        self.read_memory(address, &mut data);
-        self.regs.write(
-            inst.get_rd(),
-            RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 8),
-        );
+        //Hack for illegal address exception
+        if (address >> 63) == 1 {
+            self.pc = self.csregs.read(csregs::MTVEC) - inst.len;
+            self.csregs.write(csregs::MCAUSE, csregs::EXC_LOAD_ACCESS);
+            self.csregs.write(csregs::MEPC, self.pc + 4);
+        } else {
+            self.read_memory(address, &mut data);
+            self.regs.write(
+                inst.get_rd(),
+                RVCore::sign_extend(RVCore::byte_array_to_addr_type(&data), 8),
+            );
+        }
     }
 
     fn inst_lbu(&mut self, inst: &inst_type::InstType) {
@@ -2297,8 +2311,17 @@ impl RVCore {
         );
     }
 
-    fn inst_mret(&mut self, _inst: &inst_type::InstType) {
-        self.mode = PrivilegeMode::U;
+    fn inst_mret(&mut self, inst: &inst_type::InstType) {
+        // TODO: set mstatus.MIE, PPIE, MPP here
+        // should transit mode according to mstatus.MPP
+        let status_mpp = (self.csregs.read(csregs::MSTATUS) >> 11) & 0x3;
+        match status_mpp {
+            0 => self.mode = PrivilegeMode::U,
+            1 => self.mode = PrivilegeMode::S,
+            3 => self.mode = PrivilegeMode::M,
+            _ => panic!("Unsupported privileged level"),
+        }
+        self.pc = self.csregs.read(csregs::MEPC) - inst.len;
     }
 
     fn inst_or(&mut self, inst: &inst_type::InstType) {
