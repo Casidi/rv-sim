@@ -7,6 +7,12 @@ A RISC-V instruction-accurate simulator
 - Run ISA tests: ```python3 compare.py```
     - Assume that riscv-tests is at ```../riscv-tests```
 
+## OpenSBI support status
+- Now runs to
+    - sbi_init
+    - init_coldboot
+    - sbi_pmu_init
+
 ## TODO
 - [x] Encapsulate integer registers into a struct, use read/write API to access
 - [x] Implement one RV64I instruction and reserve the flexibility for 64-bit mode (ex. ADDIW)

@@ -453,6 +453,7 @@ impl InstDecoder {
                     let funct12 = (inst_bytes >> 20) & 0xfff;
                     match funct12 {
                         0x000 => inst.id = InstID::ECALL,
+                        0x105 => inst.id = InstID::WFI,
                         0x302 => inst.id = InstID::MRET,
                         _ => self.dump_invalid_inst(inst),
                     }
@@ -460,6 +461,7 @@ impl InstDecoder {
                 0x1 => inst.id = InstID::CSRRW,
                 0x2 => inst.id = InstID::CSRRS,
                 0x5 => inst.id = InstID::CSRRWI,
+                0x6 => inst.id = InstID::CSRRSI,
                 0x7 => inst.id = InstID::CSRRCI,
                 _ => self.dump_invalid_inst(inst),
             },

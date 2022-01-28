@@ -50,11 +50,19 @@ fn main() {
             .write_word((0x1000 + i * 4) as AddressType, reset_vec[i]);
     }
 
+    // Put dtb at 0x1020
+    let dtb_bytes = fs::read("rv-sim.dtb").unwrap();
+    for i in 0..dtb_bytes.len() {
+        mem.borrow_mut()
+            .write_byte((0x1020 + i) as AddressType, dtb_bytes[i]);
+    }
+
     let mem_if: Rc<RefCell<dyn memory_interface::MemoryInterface>> = mem.clone();
     core.bind_mem(mem_if.clone());
     core.pc = 0x1000;
 
-    for _i in 0..100 {
+    //for _i in 0..1000 {
+    while true {
         core.run(5000);
         let tohost = mem.borrow_mut().read_word(elf_info.tohost_addr) as u64;
         if tohost != 0 {

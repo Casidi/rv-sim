@@ -54,7 +54,7 @@ impl RVCore {
             println!("{:#010x} ({:#010x}) INVALID", self.pc, inst_bytes as u32);
             panic!("Invalid instruction");
         }
-
+/*
         print!(
             "PC={:#010x}, {}",
             self.pc,
@@ -65,7 +65,7 @@ impl RVCore {
             print!(", r{}={:08x}", i, self.regs.read(i));
         }
         println!("");
-
+*/
         self.execute(&inst);
         self.pc += inst.len;
 
@@ -142,6 +142,7 @@ impl RVCore {
             InstID::C_XOR => self.inst_c_xor(inst),
             InstID::CSRRCI => self.inst_csrrci(inst),
             InstID::CSRRS => self.inst_csrrs(inst),
+            InstID::CSRRSI => self.inst_csrrsi(inst),
             InstID::CSRRW => self.inst_csrrw(inst),
             InstID::CSRRWI => self.inst_csrrwi(inst),
             InstID::DIV => self.inst_div(inst),
@@ -261,6 +262,7 @@ impl RVCore {
             InstID::SUB => self.inst_sub(inst),
             InstID::SUBW => self.inst_subw(inst),
             InstID::NOP => self.inst_nop(inst),
+            InstID::WFI => self.inst_wfi(inst),
             InstID::XOR => self.inst_xor(inst),
             InstID::XORI => self.inst_xori(inst),
             InstID::INVALID => panic!("Execute: invalid instruction"),
@@ -276,6 +278,11 @@ impl RVCore {
     }
 
     fn write_memory(&mut self, address: AddressType, data: &mut [u8]) {
+        let UART_BASE = 0x1000_0000;
+        if address == UART_BASE {
+            println!("{:x}", data[0]);
+            println!("JC_DEBUG: uart access");
+        }
         self.access_memory(address, data, MemoryOperation::WRITE, false);
     }
 
@@ -1000,6 +1007,16 @@ impl RVCore {
         self.regs.write(rd, self.csregs.read(csr));
         self.csregs
             .write(csr, self.regs.read(rs1) | self.csregs.read(csr));
+        //println!("JC_DEBUG: csrrs: writing csr {}, val {:#x}, rs1={:#x}", csr
+        //            , self.regs.read(rs1) | self.csregs.read(csr), self.regs.read(rs1));
+    }
+
+    fn inst_csrrsi(&mut self, inst: &inst_type::InstType) {
+        let rd = inst.get_rd();
+        let imm = inst.get_rs1() as AddressType;
+        let csr = inst.get_csr();
+        self.regs.write(rd, self.csregs.read(csr));
+        self.csregs.write(csr, imm | self.csregs.read(csr));
         //println!("JC_DEBUG: csrrs: writing csr {}, val {:#x}, rs1={:#x}", csr
         //            , self.regs.read(rs1) | self.csregs.read(csr), self.regs.read(rs1));
     }
@@ -2573,6 +2590,7 @@ impl RVCore {
     }
 
     fn inst_nop(&mut self, _inst: &inst_type::InstType) {}
+    fn inst_wfi(&mut self, _inst: &inst_type::InstType) {}
 
     fn inst_xor(&mut self, inst: &inst_type::InstType) {
         let rs1_val = self.regs.read(inst.get_rs1());

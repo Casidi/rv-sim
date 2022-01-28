@@ -6,6 +6,12 @@ pub const FRM: AddressType = 0x2;
 pub const FCSR: AddressType = 0x3;
 pub const FCSR_RW_MASK: AddressType = 0xff;
 pub const MSTATUS: AddressType = 0x300;
+pub const MISA: AddressType = 0x301;
+pub const MISA_A: AddressType = 1 << 0;
+pub const MISA_C: AddressType = 1 << 2;
+pub const MISA_M: AddressType = 1 << 12;
+pub const MISA_I: AddressType = 1 << 8;
+pub const MISA_S: AddressType = 1 << 18;
 pub const MTVEC: AddressType = 0x305;
 pub const MEPC: AddressType = 0x341;
 pub const MCAUSE: AddressType = 0x342;
@@ -33,6 +39,8 @@ impl CSRegisters {
             self.reg_bank[FCSR as usize] & FFLAGS_RW_MASK
         } else if idx == FRM {
             (self.reg_bank[FCSR as usize] >> 5) & 7
+        } else if idx == MISA {
+            MISA_S | MISA_I | MISA_M | MISA_C | MISA_A
         } else {
             self.reg_bank[idx as usize]
         }
